@@ -1,0 +1,155 @@
+@import "tailwindcss";
+
+@theme {
+  --color-walnut: #5C4033;
+  --color-forest: #2F3E34;
+  --color-forest-deep: #243028;
+  --color-charcoal: #2B2B2B;
+  --color-sand: #D9C7A3;
+  --color-ivory: #F2EAD8;
+  --color-ivory-deep: #E6D8BE;
+  --color-background: #F2EAD8;
+  --color-foreground: #2B2B2B;
+  --color-primary: #2F3E34;
+  --color-primary-foreground: #F2EAD8;
+  --font-display: "Cormorant Garamond", ui-serif, Georgia, serif;
+  --font-sans: "IBM Plex Sans Arabic", "Manrope", ui-sans-serif, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, monospace;
+}
+
+:root {
+  color-scheme: light;
+  --walnut: #5C4033;
+  --forest: #2F3E34;
+  --charcoal: #2B2B2B;
+  --sand: #D9C7A3;
+  --ivory: #F2EAD8;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+    background: #f2ead8;
+    color: #2b2b2b;
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: #2f3e34;
+    color: #f2ead8;
+  }
+
+  :focus-visible {
+    outline: 2px solid #5c4033;
+    outline-offset: 3px;
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  a {
+    color: inherit;
+  }
+}
+
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.03em;
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+.ar {
+  font-family: "IBM Plex Sans Arabic", "Cormorant Garamond", sans-serif;
+}
+
+.grain {
+  position: relative;
+}
+
+.grain::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 70;
+  opacity: 0.09;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.36  0 0 0 0 0.28  0 0 0 0 0.2  0 0 0 0.55 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+.kufic-wash {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 72 72'><g fill='none' stroke='%235C4033' stroke-width='2'><path d='M8 8h56v8H24v16h24v8H16V16H8z'/><path d='M48 40h16v24H32v-8h24V48H48z'/></g></svg>");
+  background-size: 72px 72px;
+}
+
+.img-frame {
+  position: relative;
+  overflow: hidden;
+  background: #e6d8be;
+}
+
+.img-frame img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.9s ease;
+}
+
+.img-frame:hover img {
+  transform: scale(1.04);
+}
+
+.rule {
+  height: 1px;
+  background: color-mix(in srgb, #5c4033 28%, transparent);
+}
+
+.price-live {
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rise {
+  animation: rise 0.9s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .rise,
+  .img-frame img {
+    animation: none;
+    transition: none;
+  }
+}

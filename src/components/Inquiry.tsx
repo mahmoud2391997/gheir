@@ -1,0 +1,136 @@
+import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { Logo } from "./Logo";
+
+type InquiryPreset = {
+  title?: string;
+  summary?: string;
+};
+
+type InquiryContextValue = {
+  open: (preset?: InquiryPreset) => void;
+  close: () => void;
+};
+
+const InquiryContext = createContext<InquiryContextValue | null>(null);
+
+export function InquiryProvider({ children }: { children: ReactNode }) {
+  const [openState, setOpen] = useState(false);
+  const [preset, setPreset] = useState<InquiryPreset>({});
+  const [sent, setSent] = useState(false);
+
+  const api = useMemo(
+    () => ({
+      open: (next?: InquiryPreset) => {
+        setPreset(next ?? {});
+        setSent(false);
+        setOpen(true);
+      },
+      close: () => setOpen(false),
+    }),
+    [],
+  );
+
+  return (
+    <InquiryContext.Provider value={api}>
+      {children}
+      {openState && (
+        <div className="fixed inset-0 z-[80] flex items-end justify-center p-4 sm:items-center">
+          <button
+            type="button"
+            className="absolute inset-0 bg-forest/70"
+            aria-label="Close inquiry"
+            onClick={() => setOpen(false)}
+          />
+          <div
+            role="dialog"
+            aria-labelledby="inquiry-title"
+            className="relative w-full max-w-lg border border-sand/40 bg-ivory p-6 shadow-[0_30px_80px_rgba(43,43,43,0.28)] sm:p-8"
+          >
+            {sent ? (
+              <div className="space-y-4">
+                <p className="font-mono text-[11px] tracking-[0.25em] uppercase text-walnut">Received</p>
+                <h2 id="inquiry-title" className="font-display text-4xl text-forest">
+                  We’ll reply as a conversation.
+                </h2>
+                <p lang="ar" className="text-charcoal/80">
+                  حوار — مش عرض. عادةً خلال يوم.
+                </p>
+                <button
+                  type="button"
+                  className="mt-4 border border-forest px-5 py-3 text-sm text-forest hover:bg-forest hover:text-ivory"
+                  onClick={() => setOpen(false)}
+                >
+                  Close
+                </button>
+              </div>
+            ) : (
+              <form
+                className="space-y-4"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  setSent(true);
+                }}
+              >
+                <Logo compact />
+                <p className="mt-5 font-mono text-[11px] tracking-[0.25em] uppercase text-walnut">Inquiry</p>
+                <h2 id="inquiry-title" className="font-display text-4xl text-forest">
+                  Start a conversation
+                </h2>
+                {preset.summary && (
+                  <p className="border-l-2 border-walnut pl-3 text-sm text-charcoal/80">{preset.summary}</p>
+                )}
+                <label className="block text-sm">
+                  <span className="font-mono text-[11px] uppercase tracking-widest text-walnut">Name</span>
+                  <input
+                    required
+                    name="name"
+                    className="mt-1 w-full border border-walnut/25 bg-ivory px-3 py-2.5 outline-none focus:border-forest"
+                  />
+                </label>
+                <label className="block text-sm">
+                  <span className="font-mono text-[11px] uppercase tracking-widest text-walnut">WhatsApp</span>
+                  <input
+                    required
+                    name="phone"
+                    type="tel"
+                    className="mt-1 w-full border border-walnut/25 bg-ivory px-3 py-2.5 outline-none focus:border-forest"
+                  />
+                </label>
+                <label className="block text-sm">
+                  <span className="font-mono text-[11px] uppercase tracking-widest text-walnut">Note</span>
+                  <textarea
+                    name="note"
+                    rows={4}
+                    defaultValue={preset.title ? `${preset.title}\n${preset.summary ?? ""}` : ""}
+                    className="mt-1 w-full border border-walnut/25 bg-ivory px-3 py-2.5 outline-none focus:border-forest"
+                  />
+                </label>
+                <div className="flex flex-wrap gap-3 pt-2">
+                  <button
+                    type="submit"
+                    className="bg-forest px-5 py-3 text-sm text-ivory hover:bg-charcoal"
+                  >
+                    Send
+                  </button>
+                  <button
+                    type="button"
+                    className="px-5 py-3 text-sm text-walnut underline-offset-4 hover:underline"
+                    onClick={() => setOpen(false)}
+                  >
+                    Not now
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+    </InquiryContext.Provider>
+  );
+}
+
+export function useInquiry() {
+  const ctx = useContext(InquiryContext);
+  if (!ctx) throw new Error("InquiryProvider missing");
+  return ctx;
+}

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 148" fill="none">
+  <!-- Official GHEIR square-kufic غير. Ghayn = forest, yaa/raa = walnut. -->
+  <g fill="#2F3E34">
+    <path d="M8 6h78v14H26v96H8V6Z"/>
+    <path d="M70 6h16v72H70V6Z"/>
+    <path d="M32 24h46v12H46v56H32V24Z"/>
+    <path d="M64 24h14v48H64V24Z"/>
+    <path d="M50 40h12v36H50V40Z"/>
+  </g>
+  <g fill="#5C4033">
+    <path d="M38 82h110v16H38V82Z"/>
+    <path d="M92 62h40v20H92V62Z"/>
+    <path d="M116 62h18v48H116V62Z"/>
+    <rect x="128" y="42" width="16" height="16"/>
+    <path d="M38 106h68v14H38V106Z"/>
+    <path d="M88 106h20v36H88V106Z"/>
+    <rect x="58" y="86" width="14" height="14" transform="rotate(45 65 93)"/>
+    <rect x="80" y="86" width="14" height="14" transform="rotate(45 87 93)"/>
+  </g>
+</svg>

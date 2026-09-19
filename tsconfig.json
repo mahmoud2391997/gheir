@@ -1,0 +1,40 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
+    "module": "ESNext",
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "allowJs": true,
+    "jsx": "react-jsx",
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    },
+    "allowImportingTsExtensions": true,
+    "noEmit": true
+  },
+  "include": ["src"],
+  "exclude": [
+    "src/components/AITerminal.tsx",
+    "src/components/ApprovalCard.tsx",
+    "src/components/AuditLedgerView.tsx",
+    "src/components/AuthView.tsx",
+    "src/components/CRMView.tsx",
+    "src/components/ERPView.tsx",
+    "src/components/IntegrationsView.tsx",
+    "src/components/Navigation.tsx",
+    "src/components/TeamView.tsx",
+    "src/components/UpgradeModal.tsx",
+    "src/types.ts"
+  ]
+}
