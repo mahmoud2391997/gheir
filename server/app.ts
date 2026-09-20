@@ -57,8 +57,11 @@ function applyPosCors(req: Request, res: Response) {
     res.setHeader("Access-Control-Allow-Origin", origin);
     res.setHeader("Vary", "Origin");
   }
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, x-pos-key");
+  // Allow the headers used by the POS web client (ETag conditional requests trigger preflight).
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, x-pos-key, If-None-Match");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  // Allow the browser client to read ETag for sync decisions.
+  res.setHeader("Access-Control-Expose-Headers", "ETag");
 }
 function requirePos(req: Request, res: Response, next: NextFunction) {
   applyPosCors(req, res);
