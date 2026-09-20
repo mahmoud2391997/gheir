@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Logo } from "./Logo";
 import {
   BarChart3,
   Bell,
@@ -60,7 +61,7 @@ export function AdminPanel() {
 
   return <div className="min-h-screen bg-[#f7f6f2] text-[#252923]">
     <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-[#e5e3dc] bg-[#fbfaf7] lg:flex lg:flex-col">
-      <div className="flex h-20 items-center gap-3 border-b border-[#e5e3dc] px-7"><img src="/images/logo-lockup-dark.png" alt="Gheir" className="h-8 w-auto" /><span className="border-l border-[#d9d6cd] pl-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8b8d84]">Admin</span></div>
+      <div className="flex h-20 items-center gap-3 border-b border-[#e5e3dc] px-7"><Logo compact /><span className="border-l border-[#d9d6cd] pl-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8b8d84]">Admin</span></div>
       <nav className="flex flex-1 flex-col gap-1 p-4" aria-label="Admin navigation">
         {[['overview', LayoutDashboard, 'Overview'], ['products', Package, 'Products'], ['leads', Users, 'Leads & inquiries']].map(([key, Icon, label]) => <button key={key as string} onClick={() => setActive(key as typeof active)} className={`flex items-center gap-3 rounded-lg px-4 py-3 text-left text-sm transition-colors ${active === key ? "bg-[#26382e] text-[#f7f6f2]" : "text-[#70746b] hover:bg-[#efeee8] hover:text-[#252923]"}`}><Icon size={17} strokeWidth={1.7} />{label as string}{key === 'leads' && <span className="ml-auto rounded-full bg-[#d8b879] px-2 py-0.5 text-[10px] font-semibold text-[#26382e]">12</span>}</button>)}
         <div className="my-5 border-t border-[#e5e3dc]" />
