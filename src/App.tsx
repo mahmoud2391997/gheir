@@ -17,6 +17,7 @@ import { Partners } from "./pages/Partners";
 import { Contact } from "./pages/Contact";
 import { PieceDetail } from "./pages/PieceDetail";
 import { NotFound } from "./pages/NotFound";
+import AdminPanel from "./components/AdminPanel";
 
 function ScrollToTop() {
   const [location] = useLocation();
@@ -31,6 +32,7 @@ export default function App() {
     <InquiryProvider>
       <ScrollToTop />
       <Switch>
+        <Route path="/admin" component={AdminPanel} />
         <Route path="/" component={Home} />
         <Route path="/systems" component={Systems} />
         <Route path="/systems/:slug" component={SystemDetail} />
