@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Menu, X } from "lucide-react";
+import { Menu, ShoppingBag, X } from "lucide-react";
 import { Logo } from "./Logo";
 import { useInquiry } from "./Inquiry";
+import { useCart } from "../lib/cart";
 
 const links = [
   { href: "/systems", label: "Systems", badge: "New" },
@@ -15,6 +16,7 @@ const links = [
 export function Header() {
   const [location] = useLocation();
   const { open } = useInquiry();
+  const cart = useCart();
   const [mobile, setMobile] = useState(false);
   const dark = location === "/" || location.startsWith("/khanqah") || location.startsWith("/showroom");
 
@@ -58,6 +60,23 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <Link
+            href="/cart"
+            className={`relative inline-flex items-center gap-2 px-3 py-2 font-mono text-[11px] tracking-[0.18em] uppercase ${
+              dark ? "text-ivory/85 hover:text-ivory" : "text-charcoal/70 hover:text-forest"
+            }`}
+            aria-label="Cart"
+          >
+            <ShoppingBag size={18} />
+            <span className="hidden sm:inline">Cart</span>
+            {cart.count > 0 && (
+              <span className={`absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] ${
+                dark ? "bg-sand text-forest" : "bg-forest text-ivory"
+              }`}>
+                {cart.count}
+              </span>
+            )}
+          </Link>
           <button
             type="button"
             onClick={() => open({ title: "Conversation" })}

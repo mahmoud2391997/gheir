@@ -4,11 +4,13 @@ import { formatEGP, pieceBySlug, pieces, systemById } from "../data/catalog";
 import { NotFound } from "./NotFound";
 import { useInquiry } from "../components/Inquiry";
 import { ProductCard } from "../components/Cards";
+import { useCart } from "../lib/cart";
 
 export function PieceDetail() {
   const { slug } = useParams<{ slug: string }>();
   const piece = pieceBySlug(slug ?? "");
   const { open } = useInquiry();
+  const cart = useCart();
   if (!piece) return <NotFound />;
   const system = systemById(piece.system);
   const related = pieces.filter((p) => p.system === piece.system && p.slug !== piece.slug).slice(0, 3);
@@ -46,6 +48,18 @@ export function PieceDetail() {
               onClick={() => open({ title: piece.name, summary: `${piece.sku} from ${formatEGP(piece.priceFrom)}` })}
             >
               Inquire
+            </button>
+            <button
+              type="button"
+              className="border border-forest px-5 py-3 text-center"
+              onClick={() =>
+                cart.add(
+                  { id: piece.slug, slug: piece.slug, sku: piece.sku, name: piece.name, nameAr: piece.nameAr, image: piece.image, unitPrice: piece.priceFrom, currency: "EGP" },
+                  1,
+                )
+              }
+            >
+              Add to cart
             </button>
             <Link href="/design" className="border border-forest px-5 py-3 text-center">
               Configure
