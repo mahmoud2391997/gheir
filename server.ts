@@ -12,7 +12,22 @@ async function startServer() {
       // The hosted preview does not proxy Vite's HMR WebSocket endpoint.
       // Disable the client injection here to avoid repeated "WebSocket closed"
       // errors while Express still serves Vite-transformed modules normally.
-      server: { middlewareMode: true, hmr: false },
+      server: {
+        middlewareMode: true,
+        hmr: false,
+        ws: false,
+      },
+      plugins: [
+        {
+          name: 'disable-vite-client-injection',
+          transformIndexHtml(html: string) {
+            return html.replace(
+              '<script type="module" src="/@vite/client"></script>',
+              '',
+            );
+          },
+        },
+      ],
       appType: 'spa',
     });
     app.use(vite.middlewares);
