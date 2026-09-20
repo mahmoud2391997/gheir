@@ -13,14 +13,14 @@ export function Partners() {
             For designers and studios who want a home-style partner.
           </h1>
           <p className="mt-5 text-lg text-charcoal/80">
-            GHER as a language in your projects — not a white-label factory. Trade conversation, not a SaaS plan.
+            GHEIR as a language in your projects — not a white-label factory. Trade conversation, not a SaaS plan.
           </p>
           <p lang="ar" className="mt-3">
             اختلاف له شخصية.
           </p>
         </div>
         <div className="img-frame aspect-[4/3]">
-          <img src="/images/visualization-look.jpg" alt="Styled GHER composition for trade partners" />
+          <img src="/images/visualization-look.jpg" alt="Styled GHEIR composition for trade partners" />
         </div>
       </section>
       <section className="bg-walnut py-16 text-ivory">

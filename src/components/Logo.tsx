@@ -7,7 +7,7 @@ export function Logo({
 }) {
   return (
     <img
-      src={dark ? "/brand/lockup-white.png" : "/brand/lockup-color.png"}
+      src={compact ? "/brand/new/logo-icon-only.png" : "/brand/new/logo-full-lockup.png"}
       alt="GHEIR"
       className={`w-auto object-contain object-left ${compact ? "h-14" : "h-[8.25rem]"}`}
     />

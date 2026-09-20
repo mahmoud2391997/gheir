@@ -9,7 +9,10 @@ async function startServer() {
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      // Express owns the HTTP server, so Vite cannot attach its HMR websocket
+      // listener here. Disable HMR to prevent the injected client from retrying
+      // a websocket that can never complete its handshake in middleware mode.
+      server: { middlewareMode: true, hmr: false },
       appType: 'spa',
     });
     app.use(vite.middlewares);
