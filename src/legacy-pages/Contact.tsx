@@ -1,22 +1,25 @@
 import { useState } from "react";
 import { Layout, Eyebrow } from "../components/Layout";
 import { SHOWROOM, WHATSAPP_URL } from "../data/catalog";
+import { useContent } from "../lib/useContent";
+import { cmsDefaults } from "../cms/defaults";
 
 export function Contact() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const { data } = useContent("page.contact", cmsDefaults["page.contact"]);
 
   return (
     <Layout>
       <section className="mx-auto grid max-w-7xl gap-12 px-5 py-16 lg:grid-cols-2 lg:px-8">
         <div>
-          <Eyebrow>Contact</Eyebrow>
+          <Eyebrow>{data.eyebrow}</Eyebrow>
           <h1 className="mt-3 font-display text-6xl leading-[0.9] text-forest sm:text-7xl">
-            WhatsApp-first conversation.
+            {data.title}
           </h1>
           <p className="mt-5 text-lg text-charcoal/80">
-            Simple, smart, close. Not a ticket. Visit the showroom when the pieces need to be sat in.
+            {data.intro}
           </p>
           <ul className="mt-8 space-y-3 text-charcoal/80">
             <li>
@@ -36,10 +39,10 @@ export function Contact() {
         </div>
         <div>
           <div className="img-frame mb-6 aspect-[16/9]">
-            <img src="/images/showroom-ismailia.jpg" alt="GHER showroom" />
+            <img src={data.image.src} alt={data.image.alt} />
           </div>
           {sent ? (
-            <p className="border-l-2 border-forest pl-4">Message received. We’ll answer as a conversation.</p>
+            <p className="border-l-2 border-forest pl-4">{data.form.success}</p>
           ) : (
             <form
               className="space-y-3"
@@ -72,7 +75,7 @@ export function Contact() {
               <input name="phone" required placeholder="WhatsApp" className="w-full border border-walnut/25 bg-ivory px-3 py-3" />
               <textarea name="message" required rows={5} placeholder="What are you making at home?" className="w-full border border-walnut/25 bg-ivory px-3 py-3" />
               <button type="submit" disabled={submitting} className="bg-walnut px-6 py-3 text-ivory disabled:opacity-60">
-                {submitting ? "Sending…" : "Send message"}
+                {submitting ? "Sending…" : data.form.button}
               </button>
               {error && <p className="text-sm text-red-700">{error}</p>}
             </form>

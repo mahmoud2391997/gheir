@@ -148,6 +148,107 @@ export const cmsDefaults = {
       image: { src: "/images/living-gathering.jpg", alt: "Gathering sofa in the showroom atmosphere" },
     },
   },
+
+  "page.contact": {
+    eyebrow: "Contact",
+    title: "WhatsApp-first conversation.",
+    intro: "Simple, smart, close. Not a ticket. Visit the showroom when the pieces need to be sat in.",
+    image: { src: "/images/showroom-ismailia.jpg", alt: "GHER showroom" },
+    form: { success: "Message received. We’ll answer as a conversation.", button: "Send message" },
+  },
+
+  "page.khanqah": {
+    hero: {
+      eyebrow: "Khanqah / Making",
+      title: "A gathering place for craft.",
+      body: "Not a commercial factory. An atelier — wood, dust in the light, hands that remember.",
+      image: { src: "/images/workshop-wide.jpg", alt: "GHER workshop with wood and light" },
+    },
+    founder: {
+      title: "Ziad / زياد",
+      bodyEn:
+        "Started in 2016 with string art and wood. Then workshops. Then professional work in the UAE. The sentence people kept repeating was not a slogan. It was a reaction: ده غير.",
+      bodyAr: "ما يُصنع بالإيد، لا يمكن أن يُقلَّد حقًا.",
+      image: { src: "/images/workshop-hands.jpg", alt: "Craftsman hands assembling walnut furniture" },
+    },
+    craft: {
+      title: "Raw craft + refined result.",
+      body:
+        "Quality is explained as معمول عشان يعيش — made to live — not “أعلى جودة”. Heritage sits in the joinery, the fingerprint inlay, the refusal of beige sameness.",
+      image: { src: "/images/workshop-macro.jpg", alt: "Macro of wood grain being finished" },
+      insetImage: { src: "/images/craft-fingerprint.jpg", alt: "Geometric fingerprint inlay in walnut" },
+    },
+    journey: { eyebrow: "The customer journey", title: "From awareness to after-sales." },
+  },
+
+  "page.visualization": {
+    eyebrow: "Visualization",
+    title: "See it before it exists.",
+    intro: "Styling ideas and room compositions. Complete-the-look selling — consultative, never warehouse-pushy.",
+    looksTitle: "Looks",
+    looks: [
+      { title: "Complete the look", image: "/images/visualization-look.jpg", body: "Sofa, armchair, table, triptych — one temperature." },
+      { title: "Unbeige living", image: "/images/hero-alt.jpg", body: "Color as character, not decoration." },
+      { title: "Friday table", image: "/images/dining-friday.jpg", body: "Chairs with mashrabiya rhythm." },
+    ],
+    roomsTitle: "Rooms to enter",
+    objectsTitle: "Objects that finish a wall",
+    cta: { href: "/studio", label: "Commission a visualization" },
+  },
+
+  "page.home": {
+    hero: {
+      eyebrow: "Ismailia atelier · since 2016",
+      titleTopAr: "خلّي بيتك",
+      titleBottom: "GHEIR",
+      bodyEn: "Make your home GHEIR.",
+      bodyAr: "غير المتوقع. غير المتكرر. غير كل بيت. وأكتر شبهك.",
+      image: { src: "/images/hero-room.jpg", alt: "Forest-green sofa in a distinctive living room" },
+      primaryCta: { href: "/collection", label: "See rooms" },
+      secondaryCta: { href: "/design", label: "Design with a live price" },
+    },
+    belief: {
+      eyebrow: "Belief",
+      title: "What is made by hand can never be truly copied.",
+      bodyAr: "ما يُصنع بالإيد، لا يمكن أن يُقلَّد حقًا.",
+      bodyEn:
+        "GHEIR مش داخل ينافس على إنه الأرخص، ومش داخل كمان ينافس براندات الـLuxury. Distinctive design at a reasonable value. Personal difference — اختلاف له شخصية.",
+    },
+    rooms: {
+      eyebrow: "Rooms, three ways",
+      title: "Living. Dining. Sleep. Not a warehouse aisle.",
+    },
+    path: {
+      eyebrow: "The path",
+      title: "Three steps. Then a month of making.",
+      steps: [
+        { n: "01", title: "See a room that isn’t beige", body: "Collection — finished rooms with a point of view." },
+        { n: "02", title: "Shape it to your house", body: "Design — live indicative price as you change wood, size, fabric." },
+        { n: "03", title: "Make it in about a month", body: "Consultation, then the workshop. معمول عشان يعيش." },
+      ],
+    },
+    systems: {
+      eyebrow: "Four systems",
+      title: "Saha · Sofra · Layl · Athar",
+      allCta: { href: "/systems", label: "All systems" },
+    },
+    khanqah: {
+      eyebrow: "Khanqah",
+      title: "A place of gathering, not a factory floor.",
+      body:
+        "Ziad / زياد started in 2016 with string art and wood, then workshops and professional work in the UAE. The recurring reaction: ده غير.",
+      cta: { href: "/khanqah", label: "The making" },
+      image: { src: "/images/workshop-hands.jpg", alt: "Hands finishing walnut in the GHEIR workshop" },
+    },
+    consultation: {
+      eyebrow: "Consultation",
+      title: "Free, in this first phase. Direction — not “buy this too”.",
+      body: "Taste, but helping you discover yours. Creative Guide, not a closer.",
+      primaryCta: { href: "/consultation", label: "Book a conversation" },
+      presetTitle: "Consultation",
+      secondaryCta: { label: "Inquire now" },
+    },
+  },
 } as const;
 
 export type CmsKey = keyof typeof cmsDefaults;

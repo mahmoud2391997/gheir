@@ -5,6 +5,8 @@ import { Logo } from "../components/Logo";
 import { RoomCard } from "../components/Cards";
 import { useInquiry } from "../components/Inquiry";
 import { formatEGP, rooms, systems } from "../data/catalog";
+import { useContent } from "../lib/useContent";
+import { cmsDefaults } from "../cms/defaults";
 
 const threeWays = [
   rooms.find((r) => r.slug === "the-unbeige-living")!,
@@ -12,21 +14,16 @@ const threeWays = [
   rooms.find((r) => r.slug === "ismailia-morning")!,
 ];
 
-const steps = [
-  { n: "01", title: "See a room that isn’t beige", body: "Collection — finished rooms with a point of view." },
-  { n: "02", title: "Shape it to your house", body: "Design — live indicative price as you change wood, size, fabric." },
-  { n: "03", title: "Make it in about a month", body: "Consultation, then the workshop. معمول عشان يعيش." },
-];
-
 export function Home() {
   const { open } = useInquiry();
+  const { data } = useContent("page.home", cmsDefaults["page.home"]);
 
   return (
     <Layout>
       <section className="relative min-h-[92vh] overflow-hidden bg-forest text-ivory">
         <img
-          src="/images/hero-room.jpg"
-          alt="Forest-green sofa in a distinctive living room"
+          src={data.hero.image.src}
+          alt={data.hero.image.alt}
           className="absolute inset-0 h-full w-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-forest via-forest/40 to-transparent" />
@@ -44,7 +41,7 @@ export function Home() {
             transition={{ delay: 0.04 }}
             className="font-mono text-[11px] tracking-[0.3em] uppercase text-sand"
           >
-            Ismailia atelier · since 2016
+            {data.hero.eyebrow}
           </motion.p>
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
@@ -52,8 +49,8 @@ export function Home() {
             transition={{ delay: 0.08 }}
             className="mt-4 max-w-5xl font-display text-[clamp(3.4rem,12vw,9.5rem)] leading-[0.86] tracking-tight"
           >
-            خلّي بيتك
-            <span className="block italic text-sand">GHEIR</span>
+            {data.hero.titleTopAr}
+            <span className="block italic text-sand">{data.hero.titleBottom}</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0 }}
@@ -61,17 +58,17 @@ export function Home() {
             transition={{ delay: 0.2 }}
             className="mt-6 max-w-xl text-lg text-ivory/85"
           >
-            Make your home GHEIR.
+            {data.hero.bodyEn}
             <span lang="ar" dir="rtl" className="mt-2 inline-block">
-              غير المتوقع. غير المتكرر. غير كل بيت. وأكتر شبهك.
+              {data.hero.bodyAr}
             </span>
           </motion.p>
           <div className="mt-8 flex flex-col gap-3 pb-16 sm:flex-row sm:flex-wrap sm:pb-0">
-            <Link href="/collection" className="bg-sand px-6 py-3 text-center text-sm font-medium text-forest hover:bg-ivory">
-              See rooms
+            <Link href={data.hero.primaryCta.href} className="bg-sand px-6 py-3 text-center text-sm font-medium text-forest hover:bg-ivory">
+              {data.hero.primaryCta.label}
             </Link>
-            <Link href="/design" className="border border-sand/70 px-6 py-3 text-center text-sm font-medium text-ivory hover:bg-sand hover:text-forest">
-              Design with a live price
+            <Link href={data.hero.secondaryCta.href} className="border border-sand/70 px-6 py-3 text-center text-sm font-medium text-ivory hover:bg-sand hover:text-forest">
+              {data.hero.secondaryCta.label}
             </Link>
           </div>
         </div>
@@ -81,19 +78,17 @@ export function Home() {
         <Reveal>
           <div className="grid gap-10 lg:grid-cols-12">
             <div className="lg:col-span-7">
-              <Eyebrow>Belief</Eyebrow>
+              <Eyebrow>{data.belief.eyebrow}</Eyebrow>
               <h2 className="mt-3 font-display text-5xl leading-[0.95] text-forest sm:text-7xl">
-                What is made by hand can never be truly copied.
+                {data.belief.title}
               </h2>
             </div>
             <div className="lg:col-span-5 lg:pt-12">
               <p lang="ar" className="text-lg leading-relaxed text-charcoal/80">
-                ما يُصنع بالإيد، لا يمكن أن يُقلَّد حقًا.
+                {data.belief.bodyAr}
               </p>
               <p className="mt-4 leading-relaxed text-charcoal/80">
-                <span lang="ar">GHEIR مش داخل ينافس على إنه الأرخص، ومش داخل كمان ينافس براندات الـLuxury.</span>{" "}
-                Distinctive design at a reasonable value. Personal difference —
-                <em lang="ar"> اختلاف له شخصية</em>.
+                {data.belief.bodyEn}
               </p>
             </div>
           </div>
@@ -103,9 +98,9 @@ export function Home() {
       <section className="bg-forest py-20 text-ivory">
         <div className="mx-auto max-w-7xl px-5 lg:px-8">
           <Reveal>
-            <Eyebrow light>Rooms, three ways</Eyebrow>
+            <Eyebrow light>{data.rooms.eyebrow}</Eyebrow>
             <h2 className="mt-3 max-w-3xl font-display text-5xl leading-none text-sand">
-              Living. Dining. Sleep. Not a warehouse aisle.
+              {data.rooms.title}
             </h2>
           </Reveal>
           <div className="mt-12 grid gap-8 md:grid-cols-3">
@@ -126,11 +121,11 @@ export function Home() {
 
       <section className="mx-auto max-w-7xl px-5 py-20 lg:px-8">
         <Reveal>
-          <Eyebrow>The path</Eyebrow>
-          <h2 className="mt-3 font-display text-5xl text-forest">Three steps. Then a month of making.</h2>
+          <Eyebrow>{data.path.eyebrow}</Eyebrow>
+          <h2 className="mt-3 font-display text-5xl text-forest">{data.path.title}</h2>
         </Reveal>
         <ol className="mt-12 grid gap-px bg-walnut/20 sm:grid-cols-3">
-          {steps.map((s) => (
+          {data.path.steps.map((s) => (
             <li key={s.n} className="bg-ivory p-8">
               <p className="font-mono text-xs text-walnut">{s.n}</p>
               <h3 className="mt-4 font-display text-3xl text-forest">{s.title}</h3>
@@ -144,11 +139,11 @@ export function Home() {
         <div className="mx-auto max-w-7xl px-5 lg:px-8">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <Eyebrow>Four systems</Eyebrow>
-              <h2 className="mt-3 font-display text-5xl text-forest">Saha · Sofra · Layl · Athar</h2>
+              <Eyebrow>{data.systems.eyebrow}</Eyebrow>
+              <h2 className="mt-3 font-display text-5xl text-forest">{data.systems.title}</h2>
             </div>
-            <Link href="/systems" className="font-mono text-xs uppercase tracking-widest text-walnut hover:text-forest">
-              All systems
+            <Link href={data.systems.allCta.href} className="font-mono text-xs uppercase tracking-widest text-walnut hover:text-forest">
+              {data.systems.allCta.label}
             </Link>
           </div>
           <div className="mt-12 grid gap-6 sm:grid-cols-2">
@@ -176,18 +171,17 @@ export function Home() {
       <section className="mx-auto grid max-w-7xl items-center gap-10 px-5 py-20 lg:grid-cols-2 lg:px-8">
         <Reveal>
           <div className="img-frame aspect-[4/3]">
-            <img src="/images/workshop-hands.jpg" alt="Hands finishing walnut in the GHEIR workshop" />
+            <img src={data.khanqah.image.src} alt={data.khanqah.image.alt} />
           </div>
         </Reveal>
         <Reveal>
-          <Eyebrow>Khanqah</Eyebrow>
-          <h2 className="mt-3 font-display text-5xl text-forest">A place of gathering, not a factory floor.</h2>
+          <Eyebrow>{data.khanqah.eyebrow}</Eyebrow>
+          <h2 className="mt-3 font-display text-5xl text-forest">{data.khanqah.title}</h2>
           <p className="mt-5 leading-relaxed text-charcoal/80">
-            Ziad / زياد started in 2016 with string art and wood, then workshops and professional work in the UAE.
-            The recurring reaction: <strong>ده غير.</strong>
+            {data.khanqah.body}
           </p>
-          <Link href="/khanqah" className="mt-6 inline-block border-b border-walnut pb-1 text-sm text-walnut">
-            The making
+          <Link href={data.khanqah.cta.href} className="mt-6 inline-block border-b border-walnut pb-1 text-sm text-walnut">
+            {data.khanqah.cta.label}
           </Link>
         </Reveal>
       </section>
@@ -196,22 +190,22 @@ export function Home() {
         <div className="kufic-wash pointer-events-none absolute inset-0 opacity-[0.07]" />
         <div className="relative mx-auto grid max-w-7xl gap-10 px-5 lg:grid-cols-2 lg:px-8">
           <div>
-            <Eyebrow light>Consultation</Eyebrow>
-            <h2 className="mt-3 font-display text-5xl">Free, in this first phase. Direction — not “buy this too”.</h2>
+            <Eyebrow light>{data.consultation.eyebrow}</Eyebrow>
+            <h2 className="mt-3 font-display text-5xl">{data.consultation.title}</h2>
             <p className="mt-4 max-w-md text-ivory/80">
-              Taste, but helping you discover yours. Creative Guide, not a closer.
+              {data.consultation.body}
             </p>
           </div>
           <div className="flex flex-col justify-end gap-3 sm:flex-row sm:items-end">
-            <Link href="/consultation" className="bg-sand px-6 py-3 text-center text-sm font-medium text-forest">
-              Book a conversation
+            <Link href={data.consultation.primaryCta.href} className="bg-sand px-6 py-3 text-center text-sm font-medium text-forest">
+              {data.consultation.primaryCta.label}
             </Link>
             <button
               type="button"
-              onClick={() => open({ title: "Consultation" })}
+              onClick={() => open({ title: data.consultation.presetTitle })}
               className="border border-sand/50 px-6 py-3 text-sm"
             >
-              Inquire now
+              {data.consultation.secondaryCta.label}
             </button>
           </div>
         </div>
