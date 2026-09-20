@@ -43,6 +43,34 @@ type Order = {
 const money = (n: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
 
+function labelize(value: string) {
+  return value
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/_/g, " ")
+    .replace(/\./g, " · ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^./, (c) => c.toUpperCase());
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+const CMS_PAGES: { key: CmsKey; title: string; group: "Site" | "Pages"; previewHref?: string }[] = [
+  { group: "Site", key: "site.footer", title: "Footer", previewHref: "/" },
+  { group: "Pages", key: "page.home", title: "Home", previewHref: "/" },
+  { group: "Pages", key: "page.systems", title: "Systems", previewHref: "/systems" },
+  { group: "Pages", key: "page.pricing", title: "Pricing", previewHref: "/pricing" },
+  { group: "Pages", key: "page.studio", title: "Studio (Bespoke)", previewHref: "/studio" },
+  { group: "Pages", key: "page.consultation", title: "Consultation", previewHref: "/consultation" },
+  { group: "Pages", key: "page.showroom", title: "Showroom", previewHref: "/showroom" },
+  { group: "Pages", key: "page.partners", title: "Partners / Trade", previewHref: "/partners" },
+  { group: "Pages", key: "page.contact", title: "Contact", previewHref: "/contact" },
+  { group: "Pages", key: "page.khanqah", title: "Khanqah", previewHref: "/khanqah" },
+  { group: "Pages", key: "page.visualization", title: "Visualization", previewHref: "/visualization" },
+];
+
 export function AdminPanel() {
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [email, setEmail] = useState("");
@@ -70,11 +98,11 @@ export function AdminPanel() {
 
   // CMS editor
   const [contentKeys, setContentKeys] = useState<string[]>([]);
-  const definedKeys = Object.keys(cmsDefaults) as CmsKey[];
-  const [contentKey, setContentKey] = useState<CmsKey>("site.footer");
+  const [cmsQuery, setCmsQuery] = useState("");
+  const [contentKey, setContentKey] = useState<CmsKey>("page.home");
   const [contentValue, setContentValue] = useState<any>(cmsDefaults["site.footer"]);
   const [contentStatus, setContentStatus] = useState("");
-  const [customKey, setCustomKey] = useState("");
+  const [contentSection, setContentSection] = useState<string>("");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [advancedDraft, setAdvancedDraft] = useState("");
 
@@ -107,14 +135,17 @@ export function AdminPanel() {
         setContentStatus("");
         const response = await fetch(`/api/admin/content/${encodeURIComponent(contentKey)}`, { credentials: "include" });
         if (response.status === 404) {
-          setContentValue(cmsDefaults[contentKey]);
-          setAdvancedDraft(JSON.stringify(cmsDefaults[contentKey], null, 2));
+          const fallback = cmsDefaults[contentKey];
+          setContentValue(fallback);
+          setAdvancedDraft(JSON.stringify(fallback, null, 2));
+          if (isPlainObject(fallback)) setContentSection(Object.keys(fallback)[0] ?? "");
           return;
         }
         const json = await response.json();
         const next = json.data ?? cmsDefaults[contentKey];
         setContentValue(next);
         setAdvancedDraft(JSON.stringify(next, null, 2));
+        if (isPlainObject(next)) setContentSection(Object.keys(next)[0] ?? "");
       } catch (e) {
         setContentStatus(e instanceof Error ? e.message : "Unable to load content");
       }
@@ -468,47 +499,75 @@ export function AdminPanel() {
           {tab === "content" && (
             <div className="my-8 grid gap-4 lg:grid-cols-[280px,1fr]">
               <div className="rounded-xl border bg-[#F2EAD8] p-4">
-                <p className="text-sm font-medium">Pages & site sections</p>
+                <p className="text-sm font-medium">CMS</p>
+                <p className="mt-1 text-xs text-[#5C4033]">Pick a page, edit fields, then hit Save.</p>
+                <input
+                  className="mt-3 w-full rounded-lg border p-2 text-sm"
+                  placeholder="Search… (e.g. home, footer, pricing)"
+                  value={cmsQuery}
+                  onChange={(e) => setCmsQuery(e.target.value)}
+                />
                 <div className="mt-3 max-h-[520px] overflow-auto space-y-1">
-                  {definedKeys.map((k) => (
-                    <button key={k} type="button" onClick={() => setContentKey(k)} className={`w-full rounded-lg px-3 py-2 text-left text-sm ${k === contentKey ? "bg-[#2F3E34] text-white" : "hover:bg-black/5"}`}>
-                      {k}
-                      {contentKeys.includes(k) ? "" : <span className="ml-2 text-xs opacity-80">(default)</span>}
-                    </button>
-                  ))}
-                </div>
-
-                <p className="mt-4 text-xs text-[#5C4033]">Open any key</p>
-                <div className="mt-2 flex gap-2">
-                  <input className="w-full rounded-lg border p-2 text-sm" placeholder="custom key" value={customKey} onChange={(e) => setCustomKey(e.target.value)} />
-                  <button
-                    className="rounded-lg bg-[#2F3E34] px-3 text-sm text-white"
-                    type="button"
-                    onClick={() => {
-                      const k = customKey.trim() as CmsKey;
-                      if (!k) return;
-                      setContentKey(k);
-                      setCustomKey("");
-                    }}
-                  >
-                    Open
-                  </button>
+                  {(["Site", "Pages"] as const).map((group) => {
+                    const items = CMS_PAGES.filter((p) => p.group === group).filter((p) => {
+                      const q = cmsQuery.trim().toLowerCase();
+                      if (!q) return true;
+                      return p.title.toLowerCase().includes(q) || p.key.toLowerCase().includes(q);
+                    });
+                    if (!items.length) return null;
+                    return (
+                      <div key={group} className="pt-2">
+                        <p className="px-2 pb-1 text-[11px] font-mono uppercase tracking-widest text-walnut">{group}</p>
+                        {items.map((p) => (
+                          <button
+                            key={p.key}
+                            type="button"
+                            onClick={() => setContentKey(p.key)}
+                            className={`w-full rounded-lg px-3 py-2 text-left text-sm ${
+                              p.key === contentKey ? "bg-[#2F3E34] text-white" : "hover:bg-black/5"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <span>{p.title}</span>
+                              {!contentKeys.includes(p.key) ? <span className="text-xs opacity-80">Default</span> : null}
+                            </div>
+                            <div className={`mt-0.5 text-xs ${p.key === contentKey ? "text-white/80" : "text-[#5C4033]"}`}>{p.key}</div>
+                          </button>
+                        ))}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
               <div className="rounded-xl border bg-[#F2EAD8] p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-medium">{contentKey}</p>
-                    <p className="text-xs text-[#5C4033]">Edit with inputs and cards. Save when done.</p>
+                    <p className="text-sm font-medium">
+                      {CMS_PAGES.find((p) => p.key === contentKey)?.title ?? labelize(contentKey)}{" "}
+                      <span className="text-xs text-[#5C4033]">({contentKey})</span>
+                    </p>
+                    <p className="text-xs text-[#5C4033]">Edit fields (no JSON). Save when done.</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
+                    {CMS_PAGES.find((p) => p.key === contentKey)?.previewHref ? (
+                      <a
+                        className="rounded-lg border px-3 py-2 text-sm"
+                        href={CMS_PAGES.find((p) => p.key === contentKey)?.previewHref}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Preview
+                      </a>
+                    ) : null}
                     <button
                       type="button"
                       className="rounded-lg border px-3 py-2 text-sm"
                       onClick={() => {
                         setContentValue(cmsDefaults[contentKey] ?? {});
                         setAdvancedDraft(JSON.stringify(cmsDefaults[contentKey] ?? {}, null, 2));
+                        const v = cmsDefaults[contentKey] ?? {};
+                        if (isPlainObject(v)) setContentSection(Object.keys(v)[0] ?? "");
                       }}
                     >
                       Reset to defaults
@@ -516,8 +575,13 @@ export function AdminPanel() {
                     <button type="button" className="rounded-lg bg-[#2F3E34] px-3 py-2 text-sm text-white" onClick={saveContent}>
                       Save
                     </button>
-                    <button type="button" className="rounded-lg border px-3 py-2 text-sm" onClick={() => setShowAdvanced((v) => !v)}>
-                      {showAdvanced ? "Hide advanced" : "Advanced"}
+                    <button
+                      type="button"
+                      className="rounded-lg border px-3 py-2 text-sm"
+                      onClick={() => setShowAdvanced((v) => !v)}
+                      title="Developer-only JSON editor"
+                    >
+                      {showAdvanced ? "Hide JSON" : "Developer JSON"}
                     </button>
                   </div>
                 </div>
@@ -526,11 +590,34 @@ export function AdminPanel() {
                   <textarea className="mt-3 h-[420px] w-full rounded-lg border p-3 font-mono text-xs" value={advancedDraft} onChange={(e) => setAdvancedDraft(e.target.value)} />
                 ) : (
                   <div className="mt-3">
+                    {isPlainObject(contentValue) && Object.keys(contentValue).length > 1 ? (
+                      <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+                        <label className="text-xs text-[#5C4033]">
+                          Section
+                          <select
+                            className="mt-1 w-full rounded-lg border p-2 text-sm"
+                            value={contentSection}
+                            onChange={(e) => setContentSection(e.target.value)}
+                          >
+                            {Object.keys(contentValue).map((k) => (
+                              <option key={k} value={k}>
+                                {labelize(k)}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <p className="text-xs text-[#5C4033]">Tip: pick a section, edit fields, Save.</p>
+                      </div>
+                    ) : null}
                     <CmsFormEditor
-                      value={contentValue}
+                      value={isPlainObject(contentValue) && contentSection ? (contentValue as any)[contentSection] : contentValue}
                       onChange={(next) => {
-                        setContentValue(next);
-                        setAdvancedDraft(JSON.stringify(next, null, 2));
+                        const updated =
+                          isPlainObject(contentValue) && contentSection
+                            ? { ...(contentValue as any), [contentSection]: next }
+                            : next;
+                        setContentValue(updated);
+                        setAdvancedDraft(JSON.stringify(updated, null, 2));
                       }}
                     />
                   </div>
