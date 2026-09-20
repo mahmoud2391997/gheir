@@ -9,7 +9,10 @@ async function startServer() {
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      // The hosted preview does not proxy Vite's HMR WebSocket endpoint.
+      // Disable the client injection here to avoid repeated "WebSocket closed"
+      // errors while Express still serves Vite-transformed modules normally.
+      server: { middlewareMode: true, hmr: false },
       appType: 'spa',
     });
     app.use(vite.middlewares);
