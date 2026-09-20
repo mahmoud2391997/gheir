@@ -13,8 +13,8 @@
   --color-primary: #2F3E34;
   --color-primary-foreground: #F2EAD8;
   --font-display: "Cormorant Garamond", ui-serif, Georgia, serif;
-  --font-sans: "IBM Plex Sans Arabic", "Manrope", ui-sans-serif, sans-serif;
-  --font-mono: "DM Mono", ui-monospace, monospace;
+  --font-sans: "IBM Plex Sans Arabic", ui-sans-serif, sans-serif;
+  --font-mono: "IBM Plex Sans Arabic", ui-sans-serif, sans-serif;
 }
 
 :root {
@@ -24,6 +24,7 @@
   --charcoal: #2B2B2B;
   --sand: #D9C7A3;
   --ivory: #F2EAD8;
+  --logo-clear-space: 1rem;
 }
 
 @layer base {

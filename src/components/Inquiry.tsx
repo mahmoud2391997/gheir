@@ -17,6 +17,8 @@ export function InquiryProvider({ children }: { children: ReactNode }) {
   const [openState, setOpen] = useState(false);
   const [preset, setPreset] = useState<InquiryPreset>({});
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const api = useMemo(
     () => ({
@@ -66,9 +68,34 @@ export function InquiryProvider({ children }: { children: ReactNode }) {
             ) : (
               <form
                 className="space-y-4"
-                onSubmit={(e) => {
+                onSubmit={async (e) => {
                   e.preventDefault();
-                  setSent(true);
+                  setError("");
+                  setSubmitting(true);
+                  try {
+                    const form = e.currentTarget;
+                    const data = new FormData(form);
+                    const name = String(data.get("name") ?? "").trim();
+                    const phone = String(data.get("phone") ?? "").trim();
+                    const note = String(data.get("note") ?? "").trim();
+
+                    const response = await fetch("/api/leads", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        name,
+                        phone,
+                        message: note,
+                        source: preset.title ? `inquiry:${preset.title}` : "inquiry",
+                      }),
+                    });
+                    if (!response.ok) throw new Error((await response.json()).error ?? "Unable to send");
+                    setSent(true);
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : "Unable to send");
+                  } finally {
+                    setSubmitting(false);
+                  }
                 }}
               >
                 <Logo compact />
@@ -108,9 +135,10 @@ export function InquiryProvider({ children }: { children: ReactNode }) {
                 <div className="flex flex-wrap gap-3 pt-2">
                   <button
                     type="submit"
-                    className="bg-forest px-5 py-3 text-sm text-ivory hover:bg-charcoal"
+                    disabled={submitting}
+                    className="bg-forest px-5 py-3 text-sm text-ivory hover:bg-charcoal disabled:opacity-60"
                   >
-                    Send
+                    {submitting ? "Sending…" : "Send"}
                   </button>
                   <button
                     type="button"
@@ -120,6 +148,7 @@ export function InquiryProvider({ children }: { children: ReactNode }) {
                     Not now
                   </button>
                 </div>
+                {error && <p className="text-sm text-red-700">{error}</p>}
               </form>
             )}
           </div>
