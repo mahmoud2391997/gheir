@@ -38,7 +38,7 @@ export function Footer() {
         <div className="lg:col-span-5">
           <Logo dark />
           <p className="mt-6 max-w-sm font-display text-3xl leading-tight text-sand">
-            خلّي بيتك GHER
+            خلّي بيتك GHEIR
           </p>
           <p className="mt-4 max-w-sm text-sm leading-relaxed text-ivory/75">
             What is made by hand can never be truly copied.
@@ -64,7 +64,7 @@ export function Footer() {
       </div>
       <div className="border-t border-sand/20">
         <div className="mx-auto flex max-w-7xl flex-col gap-2 px-5 py-5 text-xs text-ivory/60 sm:flex-row sm:justify-between lg:px-8">
-          <span>GHER / غير · Accessible distinctiveness</span>
+          <span>GHEIR / غير · Accessible distinctiveness</span>
           <span lang="ar">{SHOWROOM.line}</span>
         </div>
       </div>

@@ -49,7 +49,7 @@ export function Pricing() {
           Not plans. Not luxury theater.
         </h1>
         <p className="mt-5 max-w-2xl text-lg text-charcoal/80">
-          GHER مش داخل ينافس على إنه الأرخص، ومش داخل كمان ينافس براندات الـLuxury. Accessible distinctiveness.
+          GHEIR مش داخل ينافس على إنه الأرخص، ومش داخل كمان ينافس براندات الـLuxury. Accessible distinctiveness.
           Limited pieces numbered. Customization is expected. Lead time about one month.
         </p>
       </section>

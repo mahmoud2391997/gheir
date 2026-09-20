@@ -53,7 +53,7 @@ export function Home() {
             className="mt-4 max-w-5xl font-display text-[clamp(3.4rem,12vw,9.5rem)] leading-[0.86] tracking-tight"
           >
             خلّي بيتك
-            <span className="block italic text-sand">GHER</span>
+            <span className="block italic text-sand">GHEIR</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0 }}
@@ -61,7 +61,7 @@ export function Home() {
             transition={{ delay: 0.2 }}
             className="mt-6 max-w-xl text-lg text-ivory/85"
           >
-            Make your home GHER.
+            Make your home GHEIR.
             <span lang="ar" dir="rtl" className="mt-2 inline-block">
               غير المتوقع. غير المتكرر. غير كل بيت. وأكتر شبهك.
             </span>
@@ -91,7 +91,7 @@ export function Home() {
                 ما يُصنع بالإيد، لا يمكن أن يُقلَّد حقًا.
               </p>
               <p className="mt-4 leading-relaxed text-charcoal/80">
-                <span lang="ar">GHER مش داخل ينافس على إنه الأرخص، ومش داخل كمان ينافس براندات الـLuxury.</span>{" "}
+                <span lang="ar">GHEIR مش داخل ينافس على إنه الأرخص، ومش داخل كمان ينافس براندات الـLuxury.</span>{" "}
                 Distinctive design at a reasonable value. Personal difference —
                 <em lang="ar"> اختلاف له شخصية</em>.
               </p>
@@ -176,7 +176,7 @@ export function Home() {
       <section className="mx-auto grid max-w-7xl items-center gap-10 px-5 py-20 lg:grid-cols-2 lg:px-8">
         <Reveal>
           <div className="img-frame aspect-[4/3]">
-            <img src="/images/workshop-hands.jpg" alt="Hands finishing walnut in the GHER workshop" />
+            <img src="/images/workshop-hands.jpg" alt="Hands finishing walnut in the GHEIR workshop" />
           </div>
         </Reveal>
         <Reveal>

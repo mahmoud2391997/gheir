@@ -18,7 +18,7 @@ export function Consultation() {
             find <em>your</em> taste.
           </p>
           <p lang="ar" className="mt-4">
-            GHER يساعدك تعمل بيت مميز، مختلف، وأكتر شبهك.
+            GHEIR يساعدك تعمل بيت مميز، مختلف، وأكتر شبهك.
           </p>
           <a href={WHATSAPP_URL} className="mt-8 inline-block bg-forest px-6 py-3 text-ivory">
             WhatsApp first
