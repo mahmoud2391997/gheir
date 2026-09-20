@@ -8,6 +8,7 @@ type Product = {
   _id: string;
   name: string;
   slug: string;
+  sku?: string;
   category: string;
   price: number;
   currency?: string;
@@ -86,6 +87,7 @@ export function AdminPanel() {
 
   // Products create/edit
   const [newProductName, setNewProductName] = useState("");
+  const [newProductSku, setNewProductSku] = useState("");
   const [newProductCategory, setNewProductCategory] = useState("pricing");
   const [newProductPrice, setNewProductPrice] = useState<number>(0);
   const [newProductStock, setNewProductStock] = useState<number>(0);
@@ -177,6 +179,7 @@ export function AdminPanel() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name: newProductName,
+        sku: newProductSku || undefined,
         category: newProductCategory,
         price: newProductPrice,
         stock: newProductStock,
@@ -190,6 +193,7 @@ export function AdminPanel() {
     if (!response.ok) return setError((await response.json()).error ?? "Unable to create product");
 
     setNewProductName("");
+    setNewProductSku("");
     setNewProductDescription("");
     setNewProductImageUrl("");
     setNewProductImageKey("");
@@ -200,6 +204,7 @@ export function AdminPanel() {
     setEditingProductId(p._id);
     setProductDraft({
       name: p.name,
+      sku: p.sku ?? "",
       category: p.category,
       price: p.price,
       stock: p.stock,
@@ -219,6 +224,7 @@ export function AdminPanel() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...productDraft,
+        sku: String((productDraft as any).sku ?? "").trim() || undefined,
         price: Number(productDraft.price ?? 0),
         stock: Number(productDraft.stock ?? 0),
       }),
@@ -251,6 +257,7 @@ export function AdminPanel() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         slug: piece.slug,
+        sku: piece.sku,
         name: piece.name,
         category: piece.system,
         price: piece.priceFrom,
@@ -399,7 +406,11 @@ export function AdminPanel() {
               <form onSubmit={addProduct} className="my-8 grid gap-3">
                 <div className="grid gap-3 md:grid-cols-2">
                   <input className="w-full rounded-lg border p-3" placeholder="Product name" value={newProductName} onChange={(e) => setNewProductName(e.target.value)} required />
+                  <input className="w-full rounded-lg border p-3" placeholder="SKU / barcode (optional)" value={newProductSku} onChange={(e) => setNewProductSku(e.target.value)} />
+                </div>
+                <div className="grid gap-3 md:grid-cols-2">
                   <input className="w-full rounded-lg border p-3" placeholder="Category (e.g. pricing)" value={newProductCategory} onChange={(e) => setNewProductCategory(e.target.value)} required />
+                  <input className="w-full rounded-lg border p-3" placeholder="Slug (auto)" value="auto" disabled />
                 </div>
                 <div className="grid gap-3 md:grid-cols-3">
                   <input type="number" className="w-full rounded-lg border p-3" placeholder="Price (EGP)" value={newProductPrice} onChange={(e) => setNewProductPrice(Number(e.target.value))} />
@@ -468,7 +479,9 @@ export function AdminPanel() {
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
                           <p className="font-display text-2xl text-forest">{p.name}</p>
-                          <p className="text-sm text-[#5C4033]">{p.category} · {p.status} · {p.slug}</p>
+                          <p className="text-sm text-[#5C4033]">
+                            {p.category} · {p.status} · {p.sku ? `SKU ${p.sku} · ` : ""}{p.slug}
+                          </p>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-[#5C4033]">{money(p.price)} · {p.stock} in stock</span>
@@ -481,7 +494,11 @@ export function AdminPanel() {
                         <div className="mt-4 grid gap-3 rounded-xl border p-4">
                           <div className="grid gap-3 md:grid-cols-2">
                             <input className="w-full rounded-lg border p-3" value={String(productDraft.name ?? "")} onChange={(e) => setProductDraft((d) => ({ ...d, name: e.target.value }))} placeholder="Name" />
+                            <input className="w-full rounded-lg border p-3" value={String((productDraft as any).sku ?? "")} onChange={(e) => setProductDraft((d) => ({ ...d, sku: e.target.value }))} placeholder="SKU / barcode (optional)" />
+                          </div>
+                          <div className="grid gap-3 md:grid-cols-2">
                             <input className="w-full rounded-lg border p-3" value={String(productDraft.category ?? "")} onChange={(e) => setProductDraft((d) => ({ ...d, category: e.target.value }))} placeholder="Category" />
+                            <input className="w-full rounded-lg border p-3" value={p.slug} disabled placeholder="Slug" />
                           </div>
                           <div className="grid gap-3 md:grid-cols-3">
                             <input type="number" className="w-full rounded-lg border p-3" value={Number(productDraft.price ?? 0)} onChange={(e) => setProductDraft((d) => ({ ...d, price: Number(e.target.value) }))} placeholder="Price" />
