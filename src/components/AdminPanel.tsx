@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Logo } from "./Logo";
 import { cmsDefaults, type CmsKey } from "../cms/defaults";
 import { CmsFormEditor } from "./CmsFormEditor";
+import { pieces } from "../data/catalog";
 
 type Product = {
   _id: string;
@@ -92,6 +93,8 @@ export function AdminPanel() {
   const [newProductDescription, setNewProductDescription] = useState("");
   const [newProductImageUrl, setNewProductImageUrl] = useState("");
   const [newProductImageKey, setNewProductImageKey] = useState("");
+  const [catalogQuery, setCatalogQuery] = useState("");
+  const [importStatus, setImportStatus] = useState("");
 
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [productDraft, setProductDraft] = useState<Partial<Product>>({});
@@ -237,6 +240,49 @@ export function AdminPanel() {
     await load();
   };
 
+  const importPieceAsProduct = async (pieceSlug: string) => {
+    const piece = pieces.find((p) => p.slug === pieceSlug);
+    if (!piece) return;
+    setError("");
+    setImportStatus("");
+    const response = await fetch("/api/admin/products", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        slug: piece.slug,
+        name: piece.name,
+        category: piece.system,
+        price: piece.priceFrom,
+        stock: 0,
+        status: "published",
+        description: piece.story,
+        imageUrl: piece.image,
+        currency: "EGP",
+      }),
+    });
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      if (response.status === 409) return setImportStatus("Some items already exist. Refreshing…");
+      return setError(json.error ?? "Unable to import piece");
+    }
+    setImportStatus("Imported.");
+    await load();
+  };
+
+  const catalogPieces = useMemo(() => {
+    const q = catalogQuery.trim().toLowerCase();
+    const list = pieces.slice();
+    if (!q) return list;
+    return list.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        p.slug.toLowerCase().includes(q) ||
+        p.sku.toLowerCase().includes(q) ||
+        p.system.toLowerCase().includes(q),
+    );
+  }, [catalogQuery]);
+
   const updateOrderStatus = async (id: string, status: Order["status"]) => {
     setError("");
     const response = await fetch(`/api/admin/orders/${encodeURIComponent(id)}`, {
@@ -372,6 +418,48 @@ export function AdminPanel() {
                   <button className="rounded-lg bg-[#2F3E34] px-4 py-3 text-white">Add product</button>
                 </div>
               </form>
+
+              <div className="mt-8 rounded-xl border bg-[#F2EAD8] p-5">
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-medium">Import from site catalog</p>
+                    <p className="text-xs text-[#5C4033]">These are the pieces currently shown on the website. Import them into Products so they also appear in Admin → Products.</p>
+                  </div>
+                  <div className="w-full sm:w-80">
+                    <input
+                      className="w-full rounded-lg border p-2 text-sm"
+                      placeholder="Search pieces… (name / SKU / system)"
+                      value={catalogQuery}
+                      onChange={(e) => setCatalogQuery(e.target.value)}
+                    />
+                  </div>
+                </div>
+                {importStatus ? <p className="mt-2 text-xs text-[#5C4033]">{importStatus}</p> : null}
+                <div className="mt-4 max-h-[420px] overflow-auto rounded-lg border">
+                  {catalogPieces.map((p) => {
+                    const exists = products.some((x) => x.slug === p.slug);
+                    return (
+                      <div key={p.slug} className="flex flex-wrap items-center justify-between gap-3 border-b bg-[#F2EAD8] p-3">
+                        <div className="min-w-[240px]">
+                          <p className="text-sm font-medium text-[#2B2B2B]">{p.name}</p>
+                          <p className="text-xs text-[#5C4033]">{p.sku} · {p.system} · {p.slug}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-[#5C4033]">EGP {p.priceFrom.toLocaleString("en-US")}</span>
+                          <button
+                            type="button"
+                            className={`rounded-lg border px-3 py-2 text-sm ${exists ? "opacity-60" : ""}`}
+                            disabled={exists}
+                            onClick={() => void importPieceAsProduct(p.slug)}
+                          >
+                            {exists ? "Imported" : "Import"}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
 
               <div className="mt-8 rounded-xl border bg-[#F2EAD8] p-5">
                 {products.length ? (
