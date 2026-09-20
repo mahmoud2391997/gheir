@@ -4,6 +4,8 @@ import { SHOWROOM, WHATSAPP_URL } from "../data/catalog";
 
 export function Contact() {
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   return (
     <Layout>
@@ -41,17 +43,38 @@ export function Contact() {
           ) : (
             <form
               className="space-y-3"
-              onSubmit={(e) => {
+              onSubmit={async (e) => {
                 e.preventDefault();
-                setSent(true);
+                setError("");
+                setSubmitting(true);
+                try {
+                  const form = e.currentTarget;
+                  const data = new FormData(form);
+                  const name = String(data.get("name") ?? "").trim();
+                  const phone = String(data.get("phone") ?? "").trim();
+                  const message = String(data.get("message") ?? "").trim();
+
+                  const response = await fetch("/api/leads", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name, phone, message, source: "contact" }),
+                  });
+                  if (!response.ok) throw new Error((await response.json()).error ?? "Unable to send");
+                  setSent(true);
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : "Unable to send");
+                } finally {
+                  setSubmitting(false);
+                }
               }}
             >
-              <input required placeholder="Name" className="w-full border border-walnut/25 bg-ivory px-3 py-3" />
-              <input required placeholder="WhatsApp" className="w-full border border-walnut/25 bg-ivory px-3 py-3" />
-              <textarea required rows={5} placeholder="What are you making at home?" className="w-full border border-walnut/25 bg-ivory px-3 py-3" />
-              <button type="submit" className="bg-walnut px-6 py-3 text-ivory">
-                Send message
+              <input name="name" required placeholder="Name" className="w-full border border-walnut/25 bg-ivory px-3 py-3" />
+              <input name="phone" required placeholder="WhatsApp" className="w-full border border-walnut/25 bg-ivory px-3 py-3" />
+              <textarea name="message" required rows={5} placeholder="What are you making at home?" className="w-full border border-walnut/25 bg-ivory px-3 py-3" />
+              <button type="submit" disabled={submitting} className="bg-walnut px-6 py-3 text-ivory disabled:opacity-60">
+                {submitting ? "Sending…" : "Send message"}
               </button>
+              {error && <p className="text-sm text-red-700">{error}</p>}
             </form>
           )}
         </div>
