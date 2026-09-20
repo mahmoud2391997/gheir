@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { Logo } from "./Logo";
 import { SHOWROOM } from "../data/catalog";
 import { useContent } from "../lib/useContent";
+import { cmsDefaults } from "../cms/defaults";
 
 const groups = [
   {
@@ -33,14 +34,7 @@ const groups = [
 ];
 
 export function Footer() {
-  const fallback = {
-    heroTaglineAr: "خلّي بيتك GHEIR",
-    heroBodyEn: "What is made by hand can never be truly copied.",
-    heroBodyAr: "ما يُصنع بالإيد، لا يمكن أن يُقلَّد حقًا.",
-    groups,
-    bottomLeft: "GHEIR / غير · Accessible distinctiveness",
-    bottomRight: SHOWROOM.line,
-  };
+  const fallback = { ...cmsDefaults["site.footer"], bottomRight: SHOWROOM.line, groups };
   const { data } = useContent<typeof fallback>("site.footer", fallback);
 
   return (
