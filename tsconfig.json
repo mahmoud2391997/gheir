@@ -34,21 +34,10 @@
     "strictNullChecks": true
   },
   "include": [
-    "src",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
+    "src"
   ],
   "exclude": [
-    "src/components/AITerminal.tsx",
-    "src/components/ApprovalCard.tsx",
-    "src/components/AuditLedgerView.tsx",
-    "src/components/AuthView.tsx",
-    "src/components/CRMView.tsx",
-    "src/components/ERPView.tsx",
-    "src/components/IntegrationsView.tsx",
     "src/components/Navigation.tsx",
-    "src/components/TeamView.tsx",
-    "src/components/UpgradeModal.tsx",
     "src/types.ts"
   ]
 }
