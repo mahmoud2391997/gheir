@@ -1,19 +1,22 @@
 import { Link } from "wouter";
 import { Layout, Reveal, Eyebrow } from "../components/Layout";
 import { formatEGP, systems } from "../data/catalog";
+import { useContent } from "../lib/useContent";
+import { cmsDefaults } from "../cms/defaults";
 
 export function Systems() {
+  const { data } = useContent("page.systems", cmsDefaults["page.systems"]);
   return (
     <Layout>
       <section className="mx-auto max-w-7xl px-5 py-16 lg:px-8">
-        <Eyebrow>Systems · New</Eyebrow>
+        <Eyebrow>{data.eyebrow}</Eyebrow>
         <h1 className="mt-3 max-w-4xl font-display text-6xl leading-[0.9] text-forest sm:text-8xl">
-          Four languages. One house that doesn’t look like the others.
+          {data.title}
         </h1>
         <p className="mt-6 max-w-xl text-lg text-charcoal/75">
-          Configurable families — not SKUs in a catalog grid.
+          {data.bodyEn}
           <span lang="ar" className="mt-2 block">
-            غير المتوقع. غير المتكرر.
+            {data.bodyAr}
           </span>
         </p>
       </section>
