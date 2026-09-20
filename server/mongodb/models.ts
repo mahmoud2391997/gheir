@@ -1,4 +1,6 @@
-import { Schema, model, models, type Model } from "mongoose";
+import mongoose, { Schema, type Model } from "mongoose";
+
+const { model, models } = mongoose;
 
 export type ProductDocument = { name: string; slug: string; category: string; price: number; currency: string; stock: number; status: "published" | "draft"; imageKey?: string; description?: string; createdAt: Date; updatedAt: Date };
 export type LeadDocument = { name: string; email: string; company?: string; source: string; status: "new" | "contacted" | "qualified" | "won" | "lost"; score?: number; notes?: string; createdAt: Date; updatedAt: Date };
