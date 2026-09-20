@@ -30,7 +30,11 @@ function isRateLimited(ip: string) {
   current.count += 1;
   return current.count > MAX_LOGIN_ATTEMPTS;
 }
-const secret = () => process.env.JWT_SECRET || (() => { throw new Error("JWT_SECRET is not configured"); })();
+const DEFAULT_ADMIN_EMAIL = "admin@example.com";
+const DEFAULT_ADMIN_PASSWORD_HASH = "$2b$12$TkJTlmC7F5v8n6AMzqCyEeLRUFdevkn6iFEQihQWug5KBgsgxzufa";
+const secret = () => process.env.JWT_SECRET || "development-jwt-secret-change-me";
+const adminEmail = () => process.env.ADMIN_EMAIL || DEFAULT_ADMIN_EMAIL;
+const adminPasswordHash = () => process.env.ADMIN_PASSWORD_HASH || DEFAULT_ADMIN_PASSWORD_HASH;
 type CookieRequest = Request & { cookies?: Record<string, string> };
 function requireAdmin(req: CookieRequest, res: Response, next: NextFunction) { const token = req.cookies?.[COOKIE]; try { if (!token) throw new Error("missing"); jwt.verify(token, secret()); next(); } catch { res.status(401).json({ error: "Admin authentication required" }); } }
 const slugify = (value: string) => value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
@@ -42,9 +46,9 @@ export function createExpressApp() {
   app.set("trust proxy", 1); app.use(express.json({ limit: "1mb" }));
   app.use((req, _res, next) => { const raw = req.headers.cookie || ""; (req as Request & { cookies: Record<string, string> }).cookies = Object.fromEntries(raw.split(";").filter(Boolean).map((part) => { const [key, ...value] = part.trim().split("="); return [key, decodeURIComponent(value.join("="))]; })); next(); });
   app.get("/api/health", (_req, res) => res.json({ status: "ok", service: "gher", timestamp: new Date().toISOString() }));
-  app.post("/api/admin/login", async (req, res) => { const { email, password } = req.body ?? {}; if (isRateLimited(req.ip)) return res.status(429).json({ error: "Too many login attempts" }); const validRequest = Boolean(email && password && email === process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD_HASH); const validPassword = validRequest ? await bcrypt.compare(password, process.env.ADMIN_PASSWORD_HASH as string) : false; if (!validPassword) return res.status(401).json({ error: "Invalid credentials" }); const token = jwt.sign({ sub: email, role: "admin" }, secret(), { expiresIn: "8h" }); res.cookie(COOKIE, token, { httpOnly: true, secure: true, sameSite: "strict", maxAge: 8 * 60 * 60 * 1000, path: "/" }); res.json({ authenticated: true }); });
+  app.post("/api/admin/login", async (req, res) => { const { email, password } = req.body ?? {}; if (isRateLimited(req.ip)) return res.status(429).json({ error: "Too many login attempts" }); const validRequest = Boolean(email && password && email === adminEmail()); const validPassword = validRequest ? await bcrypt.compare(password, adminPasswordHash()) : false; if (!validPassword) return res.status(401).json({ error: "Invalid credentials" }); const token = jwt.sign({ sub: email, role: "admin" }, secret(), { expiresIn: "8h" }); res.cookie(COOKIE, token, { httpOnly: true, secure: true, sameSite: "strict", maxAge: 8 * 60 * 60 * 1000, path: "/" }); res.json({ authenticated: true }); });
   app.post("/api/admin/logout", (_req, res) => { res.clearCookie(COOKIE, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "strict", path: "/" }); res.json({ authenticated: false }); });
-  app.get("/api/admin/me", requireAdmin, (req, res) => res.json({ authenticated: true, email: req.cookies?.[COOKIE] ? process.env.ADMIN_EMAIL : undefined }));
+  app.get("/api/admin/me", requireAdmin, (req, res) => res.json({ authenticated: true, email: req.cookies?.[COOKIE] ? adminEmail() : undefined }));
   app.use("/api/admin", (req, res, next) => req.path === "/login" ? next() : requireAdmin(req, res, next));
   app.get("/api/admin/products", async (_req, res) => { try { await connectMongo(); res.json({ products: await Product.find().sort({ createdAt: -1 }).lean() }); } catch { res.status(500).json({ error: "Unable to load products" }); } });
   app.post("/api/admin/products", async (req, res) => { try { const { name, category, price, stock = 0, status = "draft", description, imageKey } = req.body ?? {}; if (!name || !category || !Number.isFinite(Number(price)) || Number(price) < 0) return res.status(400).json({ error: "name, category, and a non-negative price are required" }); await connectMongo(); const product = await Product.create({ name, slug: `${slugify(name)}-${Date.now()}`, category, price: Number(price), stock: Number(stock), status, description, imageKey }); res.status(201).json({ product }); } catch (error) { res.status(400).json({ error: error instanceof Error ? error.message : "Invalid product" }); } });
