@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Logo } from "./Logo";
 import { cmsDefaults, type CmsKey } from "../cms/defaults";
 
-type Product = { _id: string; name: string; category: string; price: number; stock: number; status: string; imageKey?: string };
+type Product = { _id: string; name: string; slug: string; category: string; price: number; currency?: string; stock: number; status: "published" | "draft"; imageKey?: string; imageUrl?: string; description?: string };
 type Lead = { _id: string; name: string; company?: string; email?: string; phone?: string; source: string; status: string; score?: number; message?: string; notes?: string };
 type Order = {
   _id: string;
@@ -28,6 +28,16 @@ export function AdminPanel() {
 
   const [error, setError] = useState("");
   const [newProductName, setNewProductName] = useState("");
+  const [newProductCategory, setNewProductCategory] = useState("pricing");
+  const [newProductPrice, setNewProductPrice] = useState<number>(0);
+  const [newProductStock, setNewProductStock] = useState<number>(0);
+  const [newProductStatus, setNewProductStatus] = useState<"published" | "draft">("draft");
+  const [newProductDescription, setNewProductDescription] = useState("");
+  const [newProductImageUrl, setNewProductImageUrl] = useState("");
+  const [newProductImageKey, setNewProductImageKey] = useState("");
+
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const [productDraft, setProductDraft] = useState<Partial<Product>>({});
 
   const [contentKeys, setContentKeys] = useState<string[]>([]);
   const [contentKey, setContentKey] = useState<CmsKey>("site.footer");
@@ -91,10 +101,67 @@ export function AdminPanel() {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newProductName, category: "New collection", price: 0, stock: 0 }),
+      body: JSON.stringify({
+        name: newProductName,
+        category: newProductCategory,
+        price: newProductPrice,
+        stock: newProductStock,
+        status: newProductStatus,
+        description: newProductDescription || undefined,
+        imageUrl: newProductImageUrl || undefined,
+        imageKey: newProductImageKey || undefined,
+        currency: "EGP",
+      }),
     });
     if (!response.ok) return setError((await response.json()).error);
     setNewProductName("");
+    setNewProductDescription("");
+    setNewProductImageUrl("");
+    setNewProductImageKey("");
+    await load();
+  };
+
+  const startEditProduct = (p: Product) => {
+    setEditingProductId(p._id);
+    setProductDraft({
+      name: p.name,
+      category: p.category,
+      price: p.price,
+      stock: p.stock,
+      status: p.status,
+      description: p.description ?? "",
+      imageUrl: p.imageUrl ?? "",
+      imageKey: p.imageKey ?? "",
+    });
+  };
+
+  const saveProduct = async () => {
+    if (!editingProductId) return;
+    setError("");
+    const response = await fetch(`/api/admin/products/${encodeURIComponent(editingProductId)}`, {
+      method: "PATCH",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...productDraft,
+        price: Number(productDraft.price ?? 0),
+        stock: Number(productDraft.stock ?? 0),
+      }),
+    });
+    if (!response.ok) return setError((await response.json()).error ?? "Unable to save");
+    setEditingProductId(null);
+    setProductDraft({});
+    await load();
+  };
+
+  const deleteProduct = async (id: string) => {
+    setError("");
+    const response = await fetch(`/api/admin/products/${encodeURIComponent(id)}`, { method: "DELETE", credentials: "include" });
+    if (!response.ok && response.status !== 204) return setError((await response.json()).error ?? "Unable to delete");
+    if (editingProductId === id) {
+      setEditingProductId(null);
+      setProductDraft({});
+    }
     await load();
   };
 
@@ -200,19 +267,77 @@ export function AdminPanel() {
           {tab === "products" && (
             <>
               <form onSubmit={addProduct} className="my-8 flex gap-3">
-                <input className="w-full rounded-lg border p-3" placeholder="Product name" value={newProductName} onChange={(e) => setNewProductName(e.target.value)} required />
-                <button className="rounded-lg bg-[#2F3E34] px-4 text-white">Add product</button>
+                <div className="grid w-full gap-3">
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <input className="w-full rounded-lg border p-3" placeholder="Product name" value={newProductName} onChange={(e) => setNewProductName(e.target.value)} required />
+                    <input className="w-full rounded-lg border p-3" placeholder="Category (e.g. pricing)" value={newProductCategory} onChange={(e) => setNewProductCategory(e.target.value)} required />
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-3">
+                    <input type="number" className="w-full rounded-lg border p-3" placeholder="Price (EGP)" value={newProductPrice} onChange={(e) => setNewProductPrice(Number(e.target.value))} />
+                    <input type="number" className="w-full rounded-lg border p-3" placeholder="Stock" value={newProductStock} onChange={(e) => setNewProductStock(Number(e.target.value))} />
+                    <select className="w-full rounded-lg border p-3" value={newProductStatus} onChange={(e) => setNewProductStatus(e.target.value as any)}>
+                      <option value="draft">draft</option>
+                      <option value="published">published</option>
+                    </select>
+                  </div>
+                  <textarea className="w-full rounded-lg border p-3" rows={3} placeholder="Description (optional)" value={newProductDescription} onChange={(e) => setNewProductDescription(e.target.value)} />
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <input className="w-full rounded-lg border p-3" placeholder="Image URL (optional)" value={newProductImageUrl} onChange={(e) => setNewProductImageUrl(e.target.value)} />
+                    <input className="w-full rounded-lg border p-3" placeholder="Image key/id (optional)" value={newProductImageKey} onChange={(e) => setNewProductImageKey(e.target.value)} />
+                  </div>
+                  <div className="flex justify-end">
+                    <button className="rounded-lg bg-[#2F3E34] px-4 py-3 text-white">Add product</button>
+                  </div>
+                </div>
               </form>
               <div className="mt-8 rounded-xl border bg-[#F2EAD8] p-5">
                 {products.length ? (
                   products.map((p) => (
-                    <div className="flex justify-between border-b py-4" key={p._id}>
-                      <span>
-                        {p.name} <small className="text-[#5C4033]">{p.category}</small>
-                      </span>
-                      <span>
-                        {money(p.price)} · {p.stock} in stock
-                      </span>
+                    <div className="border-b py-4" key={p._id}>
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <p className="font-display text-2xl text-forest">{p.name}</p>
+                          <p className="text-sm text-[#5C4033]">{p.category} · {p.status} · {p.slug}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-[#5C4033]">{money(p.price)} · {p.stock} in stock</span>
+                          <button type="button" className="rounded-lg border px-3 py-2 text-sm" onClick={() => startEditProduct(p)}>
+                            Edit
+                          </button>
+                          <button type="button" className="rounded-lg border px-3 py-2 text-sm text-red-700" onClick={() => void deleteProduct(p._id)}>
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                      {editingProductId === p._id && (
+                        <div className="mt-4 grid gap-3 rounded-xl border p-4">
+                          <div className="grid gap-3 md:grid-cols-2">
+                            <input className="w-full rounded-lg border p-3" value={String(productDraft.name ?? "")} onChange={(e) => setProductDraft((d) => ({ ...d, name: e.target.value }))} placeholder="Name" />
+                            <input className="w-full rounded-lg border p-3" value={String(productDraft.category ?? "")} onChange={(e) => setProductDraft((d) => ({ ...d, category: e.target.value }))} placeholder="Category" />
+                          </div>
+                          <div className="grid gap-3 md:grid-cols-3">
+                            <input type="number" className="w-full rounded-lg border p-3" value={Number(productDraft.price ?? 0)} onChange={(e) => setProductDraft((d) => ({ ...d, price: Number(e.target.value) }))} placeholder="Price" />
+                            <input type="number" className="w-full rounded-lg border p-3" value={Number(productDraft.stock ?? 0)} onChange={(e) => setProductDraft((d) => ({ ...d, stock: Number(e.target.value) }))} placeholder="Stock" />
+                            <select className="w-full rounded-lg border p-3" value={(productDraft.status as any) ?? p.status} onChange={(e) => setProductDraft((d) => ({ ...d, status: e.target.value as any }))}>
+                              <option value="draft">draft</option>
+                              <option value="published">published</option>
+                            </select>
+                          </div>
+                          <textarea className="w-full rounded-lg border p-3" rows={3} value={String(productDraft.description ?? "")} onChange={(e) => setProductDraft((d) => ({ ...d, description: e.target.value }))} placeholder="Description" />
+                          <div className="grid gap-3 md:grid-cols-2">
+                            <input className="w-full rounded-lg border p-3" value={String(productDraft.imageUrl ?? "")} onChange={(e) => setProductDraft((d) => ({ ...d, imageUrl: e.target.value }))} placeholder="Image URL" />
+                            <input className="w-full rounded-lg border p-3" value={String(productDraft.imageKey ?? "")} onChange={(e) => setProductDraft((d) => ({ ...d, imageKey: e.target.value }))} placeholder="Image key/id" />
+                          </div>
+                          <div className="flex gap-2 justify-end">
+                            <button type="button" className="rounded-lg border px-3 py-2 text-sm" onClick={() => { setEditingProductId(null); setProductDraft({}); }}>
+                              Cancel
+                            </button>
+                            <button type="button" className="rounded-lg bg-[#2F3E34] px-3 py-2 text-sm text-white" onClick={() => void saveProduct()}>
+                              Save
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))
                 ) : (

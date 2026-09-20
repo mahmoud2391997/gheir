@@ -1,5 +1,3 @@
-import { formatEGP } from "../data/catalog";
-
 export const cmsDefaults = {
   "site.footer": {
     heroTaglineAr: "خلّي بيتك GHEIR",
@@ -69,43 +67,8 @@ export const cmsDefaults = {
     title: "Not plans. Not luxury theater.",
     body:
       "GHEIR مش داخل ينافس على إنه الأرخص، ومش داخل كمان ينافس براندات الـLuxury. Accessible distinctiveness.\nLimited pieces numbered. Customization is expected. Lead time about one month.",
-    bands: [
-      {
-        title: "Art set 50×50",
-        ar: "طقم لوحات",
-        price: "≈ 6–7k EGP",
-        image: "/images/product-art-set.jpg",
-        note: "Numbered. If the edition ends, made-to-order slightly higher.",
-      },
-      {
-        title: "Living set",
-        ar: "ركنة + كرسي + فوتيه + coffee table",
-        price: "≈ 50,000 EGP",
-        image: "/images/living-gathering.jpg",
-        note: "A starting conversation — customization and wood move the number.",
-      },
-      {
-        title: "Saha seating",
-        ar: "ساحة",
-        price: `from ${formatEGP(31500)}`,
-        image: "/images/system-saha.jpg",
-        note: "Modular. Size and fabric are the levers.",
-      },
-      {
-        title: "Sofra dining",
-        ar: "سفرة",
-        price: `from ${formatEGP(18000)}`,
-        image: "/images/system-sofra.jpg",
-        note: "Table first; chairs as extras in the configurator.",
-      },
-      {
-        title: "Layl bedroom",
-        ar: "ليل",
-        price: `from ${formatEGP(42000)}`,
-        image: "/images/system-layl.jpg",
-        note: "Custom sizes. Made to the room you have.",
-      },
-    ],
+    productCategory: "pricing",
+    productsTitle: "Starting points",
     footerNote: "Made-to-order when stock is gone — slightly higher, still yours. Quality = معمول عشان يعيش.",
     cta: { href: "/design", label: "Build a live price" },
   },
