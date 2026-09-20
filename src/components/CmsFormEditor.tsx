@@ -80,19 +80,8 @@ export function CmsFormEditor({
   value: Json;
   onChange: (next: any) => void;
 }) {
-  const rootIsObject = isPlainObject(value);
-  const entries = useMemo(() => (rootIsObject ? Object.entries(value as any) : []), [rootIsObject, value]);
-
-  if (!rootIsObject) {
-    return (
-      <div className="rounded-xl border bg-[#F2EAD8] p-4">
-        <p className="text-sm text-[#5C4033]">This content is not an object. Use the advanced editor to edit it.</p>
-      </div>
-    );
-  }
-
-  const renderNode = (path: (string | number)[], node: any, depth: number) => {
-    const key = path.join(".");
+  function renderNode(path: (string | number)[], node: any, depth: number) {
+    const key = path.length ? path.join(".") : "root";
     const padding = depth ? "pl-4" : "";
 
     if (node === null || node === undefined) {
@@ -266,7 +255,18 @@ export function CmsFormEditor({
         <p className="text-sm text-[#5C4033]">Unsupported field type</p>
       </div>
     );
-  };
+  }
+
+  const rootIsObject = isPlainObject(value);
+  const entries = useMemo(() => (rootIsObject ? Object.entries(value as any) : []), [rootIsObject, value]);
+
+  if (!rootIsObject) {
+    return (
+      <div className="rounded-xl border bg-[#F2EAD8] p-4">
+        <div className="grid gap-3">{renderNode([], value, 0)}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
