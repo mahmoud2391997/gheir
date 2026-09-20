@@ -68,6 +68,17 @@ function requirePos(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
+async function getPosInventoryMeta() {
+  const [productsCount, latest] = await Promise.all([
+    Product.countDocuments({}),
+    Product.findOne({}, { updatedAt: 1 }).sort({ updatedAt: -1 }).lean(),
+  ]);
+  const lastUpdatedAt = (latest as any)?.updatedAt instanceof Date ? ((latest as any).updatedAt as Date) : undefined;
+  const inventoryVersion = `${productsCount}:${lastUpdatedAt ? lastUpdatedAt.getTime() : 0}`;
+  const etag = `W/"${inventoryVersion}"`;
+  return { productsCount, lastUpdatedAt, inventoryVersion, etag };
+}
+
 dotenv.config();
 export function createExpressApp() {
   const app = express();
@@ -219,11 +230,58 @@ export function createExpressApp() {
   app.get("/api/images/:id", async (req, res) => { try { const stream = await downloadAsset(req.params.id); stream.on("file", (file) => { res.setHeader("Content-Type", file.contentType || "application/octet-stream"); res.setHeader("Cache-Control", "public, max-age=31536000, immutable"); }); stream.on("error", () => res.status(404).end()); stream.pipe(res); } catch { res.status(404).end(); } });
 
   // POS inventory endpoints (shared stock source of truth)
-  app.get("/api/pos/products", requirePos, async (_req, res) => {
+  app.get("/api/pos/status", requirePos, async (_req, res) => {
     try {
       await connectMongo();
-      const products = await Product.find({}, { name: 1, sku: 1, slug: 1, category: 1, price: 1, currency: 1, stock: 1, status: 1, imageUrl: 1, imageKey: 1 }).sort({ createdAt: -1 }).lean();
-      res.json({ products });
+      const meta = await getPosInventoryMeta();
+      res.setHeader("Cache-Control", "private, no-cache");
+      res.setHeader("ETag", meta.etag);
+      res.json({
+        ok: true,
+        configured: Boolean(posKey()),
+        serverTime: new Date().toISOString(),
+        productsCount: meta.productsCount,
+        lastUpdatedAt: meta.lastUpdatedAt ? meta.lastUpdatedAt.toISOString() : null,
+        inventoryVersion: meta.inventoryVersion,
+      });
+    } catch (error) {
+      console.error("pos status failed", error);
+      res.status(500).json({ ok: false, error: "Unable to load status" });
+    }
+  });
+
+  app.get("/api/pos/products", requirePos, async (req, res) => {
+    try {
+      await connectMongo();
+      const meta = await getPosInventoryMeta();
+
+      res.setHeader("Cache-Control", "private, no-cache");
+      res.setHeader("ETag", meta.etag);
+
+      const sinceRaw = typeof req.query.since === "string" ? req.query.since.trim() : "";
+      if (!sinceRaw) {
+        const ifNoneMatch = String(req.headers["if-none-match"] || "");
+        if (ifNoneMatch && ifNoneMatch === meta.etag) return res.status(304).end();
+      }
+
+      const since = sinceRaw ? new Date(sinceRaw) : null;
+      if (sinceRaw && (!since || Number.isNaN(since.getTime()))) {
+        return res.status(400).json({ error: "since must be an ISO date string" });
+      }
+
+      const query: any = since ? { updatedAt: { $gt: since } } : {};
+      const products = await Product.find(
+        query,
+        { name: 1, sku: 1, slug: 1, category: 1, price: 1, currency: 1, stock: 1, status: 1, imageUrl: 1, imageKey: 1, createdAt: 1, updatedAt: 1 },
+      )
+        .sort({ updatedAt: -1 })
+        .lean();
+
+      res.json({
+        products,
+        inventoryVersion: meta.inventoryVersion,
+        asOf: new Date().toISOString(),
+      });
     } catch (error) {
       console.error("pos products failed", error);
       res.status(500).json({ error: "Unable to load products" });
