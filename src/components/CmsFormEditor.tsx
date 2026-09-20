@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 type Primitive = string | number | boolean | null;
 type Json = Primitive | Json[] | { [k: string]: Json };
@@ -80,6 +80,31 @@ export function CmsFormEditor({
   value: Json;
   onChange: (next: any) => void;
 }) {
+  const [uploading, setUploading] = useState<Record<string, boolean>>({});
+  const [uploadError, setUploadError] = useState<Record<string, string>>({});
+
+  async function uploadImage(file: File, pathToValue: (string | number)[]) {
+    const k = pathToValue.join(".");
+    setUploading((m) => ({ ...m, [k]: true }));
+    setUploadError((m) => ({ ...m, [k]: "" }));
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const response = await fetch("/api/admin/assets", {
+        method: "POST",
+        credentials: "include",
+        body: form,
+      });
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(json.error ?? "Upload failed");
+      onChange(setAtPath(value, pathToValue, String(json.url ?? "")));
+    } catch (e) {
+      setUploadError((m) => ({ ...m, [k]: e instanceof Error ? e.message : "Upload failed" }));
+    } finally {
+      setUploading((m) => ({ ...m, [k]: false }));
+    }
+  }
+
   function renderNode(path: (string | number)[], node: any, depth: number) {
     const key = path.length ? path.join(".") : "root";
     const padding = depth ? "pl-4" : "";
@@ -94,6 +119,53 @@ export function CmsFormEditor({
 
     if (typeof node === "string") {
       const isLong = node.length > 80 || node.includes("\n");
+      const leaf = String(path[path.length - 1] ?? "").toLowerCase();
+      const looksLikeImage =
+        leaf.includes("image") ||
+        leaf.includes("src") ||
+        /\.(png|jpe?g|webp)(\?|$)/i.test(node) ||
+        node.startsWith("/images/") ||
+        node.startsWith("/api/images/");
+      if (looksLikeImage) {
+        const uploadKey = [...path].join(".");
+        return (
+          <div key={key} className={`${padding}`}>
+            <div className="mt-1 grid gap-3 sm:grid-cols-[160px,1fr]">
+              <div className="rounded-lg border bg-white/40 p-2">
+                <div className="img-frame aspect-[4/3]">
+                  <img src={node || "/images/hero-alt.jpg"} alt="" />
+                </div>
+              </div>
+              <div>
+                <input
+                  className="w-full rounded-lg border p-3 text-sm"
+                  value={node}
+                  onChange={(e) => onChange(setAtPath(value, path, e.target.value))}
+                  placeholder="Image URL"
+                />
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <label className="rounded-lg border px-3 py-2 text-sm cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (!f) return;
+                        void uploadImage(f, path);
+                        e.currentTarget.value = "";
+                      }}
+                      disabled={Boolean(uploading[uploadKey])}
+                    />
+                    {uploading[uploadKey] ? "Uploading…" : "Upload image"}
+                  </label>
+                  {uploadError[uploadKey] ? <span className="text-sm text-red-700">{uploadError[uploadKey]}</span> : null}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
       return (
         <div key={key} className={`${padding}`}>
           {isLong ? (
@@ -210,17 +282,43 @@ export function CmsFormEditor({
       const keys = Object.keys(obj);
       const isImage = keys.includes("src") && keys.includes("alt") && keys.length <= 3;
       if (isImage) {
+        const srcPath = [...path, "src"];
+        const uploadKey = srcPath.join(".");
+        const src = String(obj.src ?? "");
         return (
           <div key={key} className={`${padding} mt-3 rounded-xl border bg-[#F2EAD8] p-3`}>
             <p className="text-sm font-medium">{labelize(String(path[path.length - 1] ?? "Image"))}</p>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div className="mt-3 grid gap-3 sm:grid-cols-[160px,1fr]">
+              <div className="rounded-lg border bg-white/40 p-2">
+                <div className="img-frame aspect-[4/3]">
+                  <img src={src || "/images/hero-alt.jpg"} alt={String(obj.alt ?? "")} />
+                </div>
+              </div>
               <label className="text-xs text-[#5C4033]">
                 URL
                 <input
                   className="mt-1 w-full rounded-lg border p-2 text-sm"
-                  value={String(obj.src ?? "")}
+                  value={src}
                   onChange={(e) => onChange(setAtPath(value, [...path, "src"], e.target.value))}
                 />
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <label className="rounded-lg border px-3 py-2 text-sm text-[#2B2B2B] cursor-pointer bg-white/40">
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (!f) return;
+                        void uploadImage(f, srcPath);
+                        e.currentTarget.value = "";
+                      }}
+                      disabled={Boolean(uploading[uploadKey])}
+                    />
+                    {uploading[uploadKey] ? "Uploading…" : "Upload image"}
+                  </label>
+                  {uploadError[uploadKey] ? <span className="text-sm text-red-700">{uploadError[uploadKey]}</span> : null}
+                </div>
               </label>
               <label className="text-xs text-[#5C4033]">
                 Alt text

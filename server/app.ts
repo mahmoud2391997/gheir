@@ -64,7 +64,38 @@ export function createExpressApp() {
   app.get("/api/admin/content/:key", async (req, res) => { try { await connectMongo(); const doc = await Content.findOne({ key: req.params.key }).lean(); if (!doc) return res.status(404).json({ key: req.params.key, data: null }); res.json({ key: doc.key, data: doc.data }); } catch (error) { console.error("content get failed", error); res.status(500).json({ error: "Unable to load content" }); } });
   app.put("/api/admin/content/:key", async (req, res) => { try { const data = req.body?.data ?? req.body; if (data === undefined) return res.status(400).json({ error: "content body is required" }); await connectMongo(); const doc = await Content.findOneAndUpdate({ key: req.params.key }, { $set: { key: req.params.key, data } }, { upsert: true, new: true }).lean(); res.json({ key: doc?.key ?? req.params.key, data: doc?.data ?? data }); } catch (error) { console.error("content save failed", error); res.status(500).json({ error: "Unable to save content" }); } });
   app.get("/api/admin/products", async (_req, res) => { try { await connectMongo(); res.json({ products: await Product.find().sort({ createdAt: -1 }).lean() }); } catch { res.status(500).json({ error: "Unable to load products" }); } });
-  app.post("/api/admin/products", async (req, res) => { try { const { name, category, price, stock = 0, status = "draft", description, imageKey, imageUrl, currency = "EGP" } = req.body ?? {}; if (!name || !category || !Number.isFinite(Number(price)) || Number(price) < 0) return res.status(400).json({ error: "name, category, and a non-negative price are required" }); await connectMongo(); const product = await Product.create({ name, slug: `${slugify(name)}-${Date.now()}`, category, price: Number(price), currency: String(currency || "EGP"), stock: Number(stock), status, description, imageKey, imageUrl }); res.status(201).json({ product }); } catch (error) { res.status(400).json({ error: error instanceof Error ? error.message : "Invalid product" }); } });
+  app.post("/api/admin/products", async (req, res) => {
+    try {
+      const { name, category, price, stock = 0, status = "draft", description, imageKey, imageUrl, currency = "EGP", slug } = req.body ?? {};
+      if (!name || !category || !Number.isFinite(Number(price)) || Number(price) < 0) {
+        return res.status(400).json({ error: "name, category, and a non-negative price are required" });
+      }
+      await connectMongo();
+
+      const requestedSlug = typeof slug === "string" && slug.trim() ? slugify(slug) : "";
+      if (requestedSlug) {
+        const exists = await Product.findOne({ slug: requestedSlug }).lean();
+        if (exists) return res.status(409).json({ error: "slug already exists" });
+      }
+
+      const finalSlug = requestedSlug || `${slugify(name)}-${Date.now()}`;
+      const product = await Product.create({
+        name,
+        slug: finalSlug,
+        category,
+        price: Number(price),
+        currency: String(currency || "EGP"),
+        stock: Number(stock),
+        status,
+        description,
+        imageKey,
+        imageUrl,
+      });
+      res.status(201).json({ product });
+    } catch (error) {
+      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid product" });
+    }
+  });
   app.patch("/api/admin/products/:id", async (req, res) => { try { await connectMongo(); const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true }); if (!product) return res.status(404).json({ error: "Product not found" }); res.json({ product }); } catch (error) { res.status(400).json({ error: error instanceof Error ? error.message : "Invalid product" }); } });
   app.delete("/api/admin/products/:id", async (req, res) => { await connectMongo(); const product = await Product.findByIdAndDelete(req.params.id); if (!product) return res.status(404).json({ error: "Product not found" }); res.status(204).end(); });
   app.get("/api/admin/leads", async (_req, res) => { try { await connectMongo(); res.json({ leads: await Lead.find().sort({ createdAt: -1 }).lean() }); } catch { res.status(500).json({ error: "Unable to load leads" }); } });
