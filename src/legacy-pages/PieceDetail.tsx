@@ -5,15 +5,18 @@ import { NotFound } from "./NotFound";
 import { useInquiry } from "../components/Inquiry";
 import { ProductCard } from "../components/Cards";
 import { useCart } from "../lib/cart";
+import { useWishlist } from "../lib/wishlist";
 
 export function PieceDetail() {
   const { slug } = useParams<{ slug: string }>();
   const piece = pieceBySlug(slug ?? "");
   const { open } = useInquiry();
   const cart = useCart();
+  const wishlist = useWishlist();
   if (!piece) return <NotFound />;
   const system = systemById(piece.system);
   const related = pieces.filter((p) => p.system === piece.system && p.slug !== piece.slug).slice(0, 3);
+  const saved = wishlist.has(piece.slug);
 
   return (
     <Layout>
@@ -60,6 +63,24 @@ export function PieceDetail() {
               }
             >
               Add to cart
+            </button>
+            <button
+              type="button"
+              className="border border-forest px-5 py-3 text-center"
+              onClick={() =>
+                wishlist.toggle({
+                  id: piece.slug,
+                  kind: "piece",
+                  slug: piece.slug,
+                  sku: piece.sku,
+                  name: piece.name,
+                  image: piece.image,
+                  unitPrice: piece.priceFrom,
+                  currency: "EGP",
+                })
+              }
+            >
+              {saved ? "Remove from wishlist" : "Save to wishlist"}
             </button>
             <Link href="/design" className="border border-forest px-5 py-3 text-center">
               Configure
