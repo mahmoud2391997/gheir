@@ -45,7 +45,24 @@ function requireAdmin(req: CookieRequest, res: Response, next: NextFunction) { c
 const slugify = (value: string) => value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 const validLeadStatuses = ["new", "contacted", "qualified", "won", "lost"] as const;
 const posKey = () => process.env.POS_API_KEY?.trim() || "";
+const posAllowedOrigins = () =>
+  (process.env.POS_ALLOWED_ORIGINS || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+function applyPosCors(req: Request, res: Response) {
+  const origin = String(req.headers.origin || "");
+  const allowed = posAllowedOrigins();
+  if (origin && (allowed.includes("*") || allowed.includes(origin))) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Vary", "Origin");
+  }
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, x-pos-key");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+}
 function requirePos(req: Request, res: Response, next: NextFunction) {
+  applyPosCors(req, res);
+  if (req.method === "OPTIONS") return res.status(204).end();
   const key = req.headers["x-pos-key"];
   if (!posKey() || typeof key !== "string" || key !== posKey()) return res.status(401).json({ error: "POS authentication required" });
   next();
@@ -215,7 +232,8 @@ export function createExpressApp() {
 
   app.post("/api/pos/sales", requirePos, async (req, res) => {
     try {
-      const { items, paymentMethod, notes } = req.body ?? {};
+      const { clientSaleId, deviceId, items, paymentMethod, notes } = req.body ?? {};
+      if (!clientSaleId || typeof clientSaleId !== "string" || !clientSaleId.trim()) return res.status(400).json({ error: "clientSaleId is required" });
       if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ error: "items are required" });
       const normalized = items
         .map((it: any) => ({ sku: String(it.sku ?? "").trim(), quantity: Math.max(1, Math.floor(Number(it.quantity ?? 1))) }))
@@ -223,9 +241,15 @@ export function createExpressApp() {
       if (!normalized.length) return res.status(400).json({ error: "no valid items" });
 
       await connectMongo();
+
+      const existing = await Sale.findOne({ source: "pos", clientSaleId: clientSaleId.trim() }).lean();
+      if (existing) return res.json({ saleId: (existing as any)._id?.toString?.() ?? undefined, deduped: true });
+
       const skus = normalized.map((i) => i.sku);
       const products = await Product.find({ sku: { $in: skus } }, { sku: 1, name: 1, price: 1, currency: 1 }).lean();
       const bySku = new Map(products.map((p: any) => [String(p.sku ?? ""), p]));
+      const missing = normalized.filter((i) => !bySku.has(i.sku)).map((i) => i.sku);
+      if (missing.length) return res.status(400).json({ error: "Unknown SKU(s)", skus: missing });
       const lineItems = normalized.map((i) => {
         const p = bySku.get(i.sku);
         return { sku: i.sku, name: String(p?.name ?? i.sku), unitPrice: Number(p?.price ?? 0), quantity: i.quantity };
@@ -234,26 +258,37 @@ export function createExpressApp() {
 
       const session = await mongoose.startSession();
       let saleId = "";
+      let warnings: Array<{ sku: string; stockAfter: number }> = [];
       try {
         await session.withTransaction(async () => {
-          const bulk = await Product.bulkWrite(
+          // POS sales may occur offline; when syncing back we allow stock to go negative to reflect reality.
+          await Product.bulkWrite(
             normalized.map((it) => ({
-              updateOne: { filter: { sku: it.sku, stock: { $gte: it.quantity } }, update: { $inc: { stock: -it.quantity } } },
+              updateOne: { filter: { sku: it.sku }, update: { $inc: { stock: -it.quantity } } },
             })) as any,
             { ordered: true, session },
           );
-          if (bulk.modifiedCount !== normalized.length) throw new Error("OUT_OF_STOCK");
-          const sale = await Sale.create([{ source: "pos", currency: "EGP", subtotal, items: lineItems, paymentMethod, notes }], { session });
+          const updated = await Product.find({ sku: { $in: skus } }, { sku: 1, stock: 1 }).session(session).lean();
+          warnings = updated
+            .filter((p: any) => typeof p.stock === "number" && p.stock < 0)
+            .map((p: any) => ({ sku: String(p.sku ?? ""), stockAfter: Number(p.stock) }));
+          const sale = await Sale.create(
+            [{ source: "pos", clientSaleId: clientSaleId.trim(), deviceId: typeof deviceId === "string" ? deviceId.trim() : undefined, currency: "EGP", subtotal, items: lineItems, paymentMethod, notes }],
+            { session },
+          );
           saleId = sale[0]._id.toString();
         });
       } catch (e) {
-        if (e instanceof Error && e.message === "OUT_OF_STOCK") return res.status(409).json({ error: "Some items are out of stock" });
+        if (e instanceof Error && /duplicate key/i.test(e.message)) {
+          const ex = await Sale.findOne({ source: "pos", clientSaleId: clientSaleId.trim() }).lean();
+          return res.json({ saleId: (ex as any)?._id?.toString?.(), deduped: true });
+        }
         throw e;
       } finally {
         await session.endSession();
       }
 
-      res.status(201).json({ saleId });
+      res.status(201).json({ saleId, warnings });
     } catch (error) {
       console.error("pos sale failed", error);
       res.status(500).json({ error: "Unable to create sale" });

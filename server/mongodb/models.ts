@@ -17,6 +17,8 @@ export type OrderDocument = {
 };
 export type SaleDocument = {
   source: "pos";
+  clientSaleId: string;
+  deviceId?: string;
   items: { sku: string; name: string; unitPrice: number; quantity: number }[];
   currency: "EGP";
   subtotal: number;
@@ -75,6 +77,8 @@ const orderSchema = new Schema<OrderDocument>(
 const saleSchema = new Schema<SaleDocument>(
   {
     source: { type: String, enum: ["pos"], default: "pos", index: true },
+    clientSaleId: { type: String, required: true, trim: true },
+    deviceId: { type: String, trim: true },
     currency: { type: String, enum: ["EGP"], default: "EGP" },
     subtotal: { type: Number, required: true, min: 0 },
     items: [
@@ -90,6 +94,7 @@ const saleSchema = new Schema<SaleDocument>(
   },
   { timestamps: true },
 );
+saleSchema.index({ source: 1, clientSaleId: 1 }, { unique: true });
 
 export const Product = (models.Product as Model<ProductDocumentV2>) || model<ProductDocumentV2>("Product", productSchema);
 export const Lead = (models.Lead as Model<LeadDocument>) || model<LeadDocument>("Lead", leadSchema);
