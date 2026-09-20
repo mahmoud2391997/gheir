@@ -4,10 +4,14 @@ import { formatEGP } from "../data/catalog";
 import { useContent } from "../lib/useContent";
 import { cmsDefaults } from "../cms/defaults";
 import { useEffect, useState } from "react";
+import { useCart } from "../lib/cart";
+import { useWishlist } from "../lib/wishlist";
 
 export function Pricing() {
   const { data } = useContent("page.pricing", cmsDefaults["page.pricing"]);
-  const [products, setProducts] = useState<{ _id: string; name: string; category: string; price: number; description?: string; imageUrl?: string; imageKey?: string }[]>([]);
+  const cart = useCart();
+  const wishlist = useWishlist();
+  const [products, setProducts] = useState<{ _id: string; name: string; slug: string; category: string; price: number; description?: string; imageUrl?: string; imageKey?: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -58,9 +62,53 @@ export function Pricing() {
                 </div>
                 <div className="p-6">
                   <p className="font-mono text-[11px] uppercase tracking-widest text-walnut">{p.category}</p>
-                  <h3 className="mt-1 font-display text-4xl text-forest">{p.name}</h3>
+                  <Link href={`/products/${p.slug}`} className="mt-1 block font-display text-4xl text-forest">
+                    {p.name}
+                  </Link>
                   <p className="mt-2 font-display text-3xl text-walnut">{formatEGP(p.price)}</p>
                   {p.description && <p className="mt-3 text-sm text-charcoal/70">{p.description}</p>}
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      className="bg-forest px-4 py-2 text-sm text-ivory"
+                      onClick={() =>
+                        cart.add(
+                          {
+                            id: p.slug,
+                            slug: p.slug,
+                            sku: p.slug,
+                            name: p.name,
+                            image: p.imageUrl ?? (p.imageKey ? `/api/images/${p.imageKey}` : "/images/hero-alt.jpg"),
+                            unitPrice: p.price,
+                            currency: "EGP",
+                          },
+                          1,
+                        )
+                      }
+                    >
+                      Add to cart
+                    </button>
+                    <button
+                      type="button"
+                      className={`border px-4 py-2 text-sm ${
+                        wishlist.has(p.slug) ? "border-forest text-forest" : "border-walnut/30 text-walnut"
+                      }`}
+                      onClick={() =>
+                        wishlist.toggle({
+                          id: p.slug,
+                          kind: "product",
+                          slug: p.slug,
+                          sku: p.slug,
+                          name: p.name,
+                          image: p.imageUrl ?? (p.imageKey ? `/api/images/${p.imageKey}` : "/images/hero-alt.jpg"),
+                          unitPrice: p.price,
+                          currency: "EGP",
+                        })
+                      }
+                    >
+                      {wishlist.has(p.slug) ? "Saved" : "Save"}
+                    </button>
+                  </div>
                 </div>
               </article>
             ))}
