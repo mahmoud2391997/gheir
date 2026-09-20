@@ -15,8 +15,35 @@ export type OrderDocument = {
   createdAt: Date;
   updatedAt: Date;
 };
+export type SaleDocument = {
+  source: "pos";
+  items: { sku: string; name: string; unitPrice: number; quantity: number }[];
+  currency: "EGP";
+  subtotal: number;
+  paymentMethod?: string;
+  notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
-const productSchema = new Schema<ProductDocument>({ name: { type: String, required: true, trim: true }, slug: { type: String, required: true, unique: true, index: true }, category: { type: String, required: true, trim: true }, price: { type: Number, required: true, min: 0 }, currency: { type: String, default: "EGP", uppercase: true }, stock: { type: Number, default: 0, min: 0 }, status: { type: String, enum: ["published", "draft"], default: "draft", index: true }, imageKey: String, imageUrl: String, description: String }, { timestamps: true });
+export type ProductDocumentV2 = ProductDocument & { sku?: string };
+const productSchema = new Schema<ProductDocumentV2>(
+  {
+    name: { type: String, required: true, trim: true },
+    slug: { type: String, required: true, unique: true, index: true },
+    sku: { type: String, trim: true, index: true },
+    category: { type: String, required: true, trim: true },
+    price: { type: Number, required: true, min: 0 },
+    currency: { type: String, default: "EGP", uppercase: true },
+    stock: { type: Number, default: 0, min: 0 },
+    status: { type: String, enum: ["published", "draft"], default: "draft", index: true },
+    imageKey: String,
+    imageUrl: String,
+    description: String,
+  },
+  { timestamps: true },
+);
+productSchema.index({ sku: 1 }, { unique: true, sparse: true });
 const leadSchema = new Schema<LeadDocument>({ name: { type: String, required: true, trim: true }, email: { type: String, lowercase: true, trim: true, index: true }, phone: { type: String, trim: true, index: true }, company: String, source: { type: String, default: "website" }, status: { type: String, enum: ["new", "contacted", "qualified", "won", "lost"], default: "new", index: true }, score: { type: Number, min: 0, max: 100 }, notes: String, message: String }, { timestamps: true });
 const contentSchema = new Schema<ContentDocument>({ key: { type: String, required: true, trim: true, unique: true, index: true }, data: { type: Schema.Types.Mixed, required: true } }, { timestamps: true, minimize: false });
 const orderSchema = new Schema<OrderDocument>(
@@ -45,8 +72,27 @@ const orderSchema = new Schema<OrderDocument>(
   },
   { timestamps: true },
 );
+const saleSchema = new Schema<SaleDocument>(
+  {
+    source: { type: String, enum: ["pos"], default: "pos", index: true },
+    currency: { type: String, enum: ["EGP"], default: "EGP" },
+    subtotal: { type: Number, required: true, min: 0 },
+    items: [
+      {
+        sku: { type: String, required: true, trim: true },
+        name: { type: String, required: true, trim: true },
+        unitPrice: { type: Number, required: true, min: 0 },
+        quantity: { type: Number, required: true, min: 1 },
+      },
+    ],
+    paymentMethod: { type: String, trim: true },
+    notes: { type: String, trim: true },
+  },
+  { timestamps: true },
+);
 
-export const Product = (models.Product as Model<ProductDocument>) || model<ProductDocument>("Product", productSchema);
+export const Product = (models.Product as Model<ProductDocumentV2>) || model<ProductDocumentV2>("Product", productSchema);
 export const Lead = (models.Lead as Model<LeadDocument>) || model<LeadDocument>("Lead", leadSchema);
 export const Content = (models.Content as Model<ContentDocument>) || model<ContentDocument>("Content", contentSchema);
 export const Order = (models.Order as Model<OrderDocument>) || model<OrderDocument>("Order", orderSchema);
+export const Sale = (models.Sale as Model<SaleDocument>) || model<SaleDocument>("Sale", saleSchema);
