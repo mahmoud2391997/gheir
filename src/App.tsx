@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Route, Switch, useLocation } from "wouter";
 import { InquiryProvider } from "./components/Inquiry";
+import { CartProvider } from "./lib/cart";
 import { Home } from "./legacy-pages/Home";
 import { Systems } from "./legacy-pages/Systems";
 import { SystemDetail } from "./legacy-pages/SystemDetail";
@@ -18,6 +19,7 @@ import { Contact } from "./legacy-pages/Contact";
 import { PieceDetail } from "./legacy-pages/PieceDetail";
 import { NotFound } from "./legacy-pages/NotFound";
 import AdminPanel from "./components/AdminPanel";
+import { CartPage } from "./legacy-pages/CartPage";
 
 function ScrollToTop() {
   const [location] = useLocation();
@@ -29,27 +31,30 @@ function ScrollToTop() {
 
 export default function App() {
   return (
-    <InquiryProvider>
-      <ScrollToTop />
-      <Switch>
-        <Route path="/admin" component={AdminPanel} />
-        <Route path="/" component={Home} />
-        <Route path="/systems" component={Systems} />
-        <Route path="/systems/:slug" component={SystemDetail} />
-        <Route path="/collection" component={Collection} />
-        <Route path="/collection/:slug" component={RoomDetail} />
-        <Route path="/design" component={Design} />
-        <Route path="/khanqah" component={Khanqah} />
-        <Route path="/studio" component={Studio} />
-        <Route path="/consultation" component={Consultation} />
-        <Route path="/visualization" component={Visualization} />
-        <Route path="/showroom" component={Showroom} />
-        <Route path="/pricing" component={Pricing} />
-        <Route path="/partners" component={Partners} />
-        <Route path="/contact" component={Contact} />
-        <Route path="/piece/:slug" component={PieceDetail} />
-        <Route component={NotFound} />
-      </Switch>
-    </InquiryProvider>
+    <CartProvider>
+      <InquiryProvider>
+        <ScrollToTop />
+        <Switch>
+          <Route path="/admin" component={AdminPanel} />
+          <Route path="/cart" component={CartPage} />
+          <Route path="/" component={Home} />
+          <Route path="/systems" component={Systems} />
+          <Route path="/systems/:slug" component={SystemDetail} />
+          <Route path="/collection" component={Collection} />
+          <Route path="/collection/:slug" component={RoomDetail} />
+          <Route path="/design" component={Design} />
+          <Route path="/khanqah" component={Khanqah} />
+          <Route path="/studio" component={Studio} />
+          <Route path="/consultation" component={Consultation} />
+          <Route path="/visualization" component={Visualization} />
+          <Route path="/showroom" component={Showroom} />
+          <Route path="/pricing" component={Pricing} />
+          <Route path="/partners" component={Partners} />
+          <Route path="/contact" component={Contact} />
+          <Route path="/piece/:slug" component={PieceDetail} />
+          <Route component={NotFound} />
+        </Switch>
+      </InquiryProvider>
+    </CartProvider>
   );
 }
