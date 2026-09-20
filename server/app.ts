@@ -31,10 +31,13 @@ function isRateLimited(ip: string) {
   return current.count > MAX_LOGIN_ATTEMPTS;
 }
 const DEFAULT_ADMIN_EMAIL = "admin@example.com";
-const DEFAULT_ADMIN_PASSWORD_HASH = "$2b$12$TkJTlmC7F5v8n6AMzqCyEeLRUFdevkn6iFEQihQWug5KBgsgxzufa";
+const DEFAULT_ADMIN_PASSWORD_HASH = "$2b$12$sOXS9AA6KjYlis/LRdyAcuafKp/OL235O/14UzSEdHWVLzL.HUcMG";
 const secret = () => process.env.JWT_SECRET || "development-jwt-secret-change-me";
-const adminEmail = () => process.env.ADMIN_EMAIL || DEFAULT_ADMIN_EMAIL;
-const adminPasswordHash = () => process.env.ADMIN_PASSWORD_HASH || DEFAULT_ADMIN_PASSWORD_HASH;
+const adminEmail = () => process.env.ADMIN_EMAIL?.trim() || DEFAULT_ADMIN_EMAIL;
+const adminPasswordHash = () => {
+  const configuredHash = process.env.ADMIN_PASSWORD_HASH?.trim();
+  return configuredHash && /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(configuredHash) ? configuredHash : DEFAULT_ADMIN_PASSWORD_HASH;
+};
 type CookieRequest = Request & { cookies?: Record<string, string> };
 function requireAdmin(req: CookieRequest, res: Response, next: NextFunction) { const token = req.cookies?.[COOKIE]; try { if (!token) throw new Error("missing"); jwt.verify(token, secret()); next(); } catch { res.status(401).json({ error: "Admin authentication required" }); } }
 const slugify = (value: string) => value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
