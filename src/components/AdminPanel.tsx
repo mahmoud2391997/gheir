@@ -1,9 +1,35 @@
 import { useEffect, useState } from "react";
 import { Logo } from "./Logo";
 import { cmsDefaults, type CmsKey } from "../cms/defaults";
+import { CmsFormEditor } from "./CmsFormEditor";
 
-type Product = { _id: string; name: string; slug: string; category: string; price: number; currency?: string; stock: number; status: "published" | "draft"; imageKey?: string; imageUrl?: string; description?: string };
-type Lead = { _id: string; name: string; company?: string; email?: string; phone?: string; source: string; status: string; score?: number; message?: string; notes?: string };
+type Product = {
+  _id: string;
+  name: string;
+  slug: string;
+  category: string;
+  price: number;
+  currency?: string;
+  stock: number;
+  status: "published" | "draft";
+  imageKey?: string;
+  imageUrl?: string;
+  description?: string;
+};
+
+type Lead = {
+  _id: string;
+  name: string;
+  company?: string;
+  email?: string;
+  phone?: string;
+  source: string;
+  status: string;
+  score?: number;
+  message?: string;
+  notes?: string;
+};
+
 type Order = {
   _id: string;
   status: "new" | "confirmed" | "in_progress" | "delivered" | "cancelled";
@@ -14,7 +40,8 @@ type Order = {
   createdAt?: string;
 };
 
-const money = (n: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
+const money = (n: number) =>
+  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
 
 export function AdminPanel() {
   const [authed, setAuthed] = useState<boolean | null>(null);
@@ -27,6 +54,8 @@ export function AdminPanel() {
   const [orders, setOrders] = useState<Order[]>([]);
 
   const [error, setError] = useState("");
+
+  // Products create/edit
   const [newProductName, setNewProductName] = useState("");
   const [newProductCategory, setNewProductCategory] = useState("pricing");
   const [newProductPrice, setNewProductPrice] = useState<number>(0);
@@ -39,23 +68,28 @@ export function AdminPanel() {
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [productDraft, setProductDraft] = useState<Partial<Product>>({});
 
+  // CMS editor
   const [contentKeys, setContentKeys] = useState<string[]>([]);
+  const definedKeys = Object.keys(cmsDefaults) as CmsKey[];
   const [contentKey, setContentKey] = useState<CmsKey>("site.footer");
-  const [contentDraft, setContentDraft] = useState("{\n  \n}");
+  const [contentValue, setContentValue] = useState<any>(cmsDefaults["site.footer"]);
   const [contentStatus, setContentStatus] = useState("");
   const [customKey, setCustomKey] = useState("");
-  const definedKeys = Object.keys(cmsDefaults) as CmsKey[];
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [advancedDraft, setAdvancedDraft] = useState("");
 
   const load = async () => {
     const me = await fetch("/api/admin/me", { credentials: "include" });
     setAuthed(me.ok);
     if (!me.ok) return;
+
     const [p, l, o, c] = await Promise.all([
       fetch("/api/admin/products", { credentials: "include" }),
       fetch("/api/admin/leads", { credentials: "include" }),
       fetch("/api/admin/orders", { credentials: "include" }),
       fetch("/api/admin/content", { credentials: "include" }),
     ]);
+
     setProducts((await p.json()).products ?? []);
     setLeads((await l.json()).leads ?? []);
     setOrders((await o.json()).orders ?? []);
@@ -72,9 +106,15 @@ export function AdminPanel() {
       try {
         setContentStatus("");
         const response = await fetch(`/api/admin/content/${encodeURIComponent(contentKey)}`, { credentials: "include" });
-        if (response.status === 404) return setContentDraft(JSON.stringify(cmsDefaults[contentKey], null, 2));
+        if (response.status === 404) {
+          setContentValue(cmsDefaults[contentKey]);
+          setAdvancedDraft(JSON.stringify(cmsDefaults[contentKey], null, 2));
+          return;
+        }
         const json = await response.json();
-        setContentDraft(JSON.stringify(json.data ?? cmsDefaults[contentKey], null, 2));
+        const next = json.data ?? cmsDefaults[contentKey];
+        setContentValue(next);
+        setAdvancedDraft(JSON.stringify(next, null, 2));
       } catch (e) {
         setContentStatus(e instanceof Error ? e.message : "Unable to load content");
       }
@@ -113,7 +153,8 @@ export function AdminPanel() {
         currency: "EGP",
       }),
     });
-    if (!response.ok) return setError((await response.json()).error);
+    if (!response.ok) return setError((await response.json()).error ?? "Unable to create product");
+
     setNewProductName("");
     setNewProductDescription("");
     setNewProductImageUrl("");
@@ -148,7 +189,7 @@ export function AdminPanel() {
         stock: Number(productDraft.stock ?? 0),
       }),
     });
-    if (!response.ok) return setError((await response.json()).error ?? "Unable to save");
+    if (!response.ok) return setError((await response.json()).error ?? "Unable to save product");
     setEditingProductId(null);
     setProductDraft({});
     await load();
@@ -157,7 +198,7 @@ export function AdminPanel() {
   const deleteProduct = async (id: string) => {
     setError("");
     const response = await fetch(`/api/admin/products/${encodeURIComponent(id)}`, { method: "DELETE", credentials: "include" });
-    if (!response.ok && response.status !== 204) return setError((await response.json()).error ?? "Unable to delete");
+    if (!response.ok && response.status !== 204) return setError((await response.json()).error ?? "Unable to delete product");
     if (editingProductId === id) {
       setEditingProductId(null);
       setProductDraft({});
@@ -180,23 +221,22 @@ export function AdminPanel() {
   const saveContent = async () => {
     try {
       setContentStatus("");
-      const data = JSON.parse(contentDraft);
+      const data = showAdvanced ? JSON.parse(advancedDraft) : contentValue;
       const response = await fetch(`/api/admin/content/${encodeURIComponent(contentKey)}`, {
         method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data }),
       });
-      if (!response.ok) throw new Error((await response.json()).error ?? "Unable to save");
+      if (!response.ok) throw new Error((await response.json()).error ?? "Unable to save content");
       setContentStatus("Saved.");
       if (!contentKeys.includes(contentKey)) setContentKeys((prev) => [...prev, contentKey].sort());
     } catch (e) {
-      setContentStatus(e instanceof Error ? e.message : "Unable to save");
+      setContentStatus(e instanceof Error ? e.message : "Unable to save content");
     }
   };
 
   const newLeads = leads.filter((lead) => lead.status === "new").length;
-  const pipeline = leads.reduce((sum, lead) => sum + (lead.score ?? 0) * 1000, 0);
 
   if (authed === null) return <div className="p-10 text-sm">Loading admin…</div>;
 
@@ -224,8 +264,13 @@ export function AdminPanel() {
         <Logo compact />
         <nav className="mt-10 flex flex-col gap-2">
           {(["overview", "products", "leads", "orders", "content"] as const).map((item) => (
-            <button key={item} className={`rounded-lg p-3 text-left capitalize ${tab === item ? "bg-[#2F3E34] text-white" : ""}`} onClick={() => setTab(item)} type="button">
-              {item === "leads" ? "Leads & inquiries" : item === "content" ? "CMS" : item}
+            <button
+              key={item}
+              className={`rounded-lg p-3 text-left capitalize ${tab === item ? "bg-[#2F3E34] text-white" : ""}`}
+              onClick={() => setTab(item)}
+              type="button"
+            >
+              {item === "leads" ? "Leads & inquiries" : item === "orders" ? "Orders" : item === "content" ? "CMS" : item}
             </button>
           ))}
         </nav>
@@ -234,7 +279,15 @@ export function AdminPanel() {
       <main className="lg:pl-64">
         <header className="flex justify-between border-b bg-[#F2EAD8] p-6">
           <h1 className="text-xl font-semibold">
-            {tab === "overview" ? "Good morning" : tab === "products" ? "Products" : tab === "leads" ? "Leads & inquiries" : tab === "orders" ? "Orders" : "CMS"}
+            {tab === "overview"
+              ? "Good morning"
+              : tab === "products"
+                ? "Products"
+                : tab === "leads"
+                  ? "Leads & inquiries"
+                  : tab === "orders"
+                    ? "Orders"
+                    : "CMS"}
           </h1>
           <button
             onClick={async () => {
@@ -266,30 +319,29 @@ export function AdminPanel() {
 
           {tab === "products" && (
             <>
-              <form onSubmit={addProduct} className="my-8 flex gap-3">
-                <div className="grid w-full gap-3">
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <input className="w-full rounded-lg border p-3" placeholder="Product name" value={newProductName} onChange={(e) => setNewProductName(e.target.value)} required />
-                    <input className="w-full rounded-lg border p-3" placeholder="Category (e.g. pricing)" value={newProductCategory} onChange={(e) => setNewProductCategory(e.target.value)} required />
-                  </div>
-                  <div className="grid gap-3 md:grid-cols-3">
-                    <input type="number" className="w-full rounded-lg border p-3" placeholder="Price (EGP)" value={newProductPrice} onChange={(e) => setNewProductPrice(Number(e.target.value))} />
-                    <input type="number" className="w-full rounded-lg border p-3" placeholder="Stock" value={newProductStock} onChange={(e) => setNewProductStock(Number(e.target.value))} />
-                    <select className="w-full rounded-lg border p-3" value={newProductStatus} onChange={(e) => setNewProductStatus(e.target.value as any)}>
-                      <option value="draft">draft</option>
-                      <option value="published">published</option>
-                    </select>
-                  </div>
-                  <textarea className="w-full rounded-lg border p-3" rows={3} placeholder="Description (optional)" value={newProductDescription} onChange={(e) => setNewProductDescription(e.target.value)} />
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <input className="w-full rounded-lg border p-3" placeholder="Image URL (optional)" value={newProductImageUrl} onChange={(e) => setNewProductImageUrl(e.target.value)} />
-                    <input className="w-full rounded-lg border p-3" placeholder="Image key/id (optional)" value={newProductImageKey} onChange={(e) => setNewProductImageKey(e.target.value)} />
-                  </div>
-                  <div className="flex justify-end">
-                    <button className="rounded-lg bg-[#2F3E34] px-4 py-3 text-white">Add product</button>
-                  </div>
+              <form onSubmit={addProduct} className="my-8 grid gap-3">
+                <div className="grid gap-3 md:grid-cols-2">
+                  <input className="w-full rounded-lg border p-3" placeholder="Product name" value={newProductName} onChange={(e) => setNewProductName(e.target.value)} required />
+                  <input className="w-full rounded-lg border p-3" placeholder="Category (e.g. pricing)" value={newProductCategory} onChange={(e) => setNewProductCategory(e.target.value)} required />
+                </div>
+                <div className="grid gap-3 md:grid-cols-3">
+                  <input type="number" className="w-full rounded-lg border p-3" placeholder="Price (EGP)" value={newProductPrice} onChange={(e) => setNewProductPrice(Number(e.target.value))} />
+                  <input type="number" className="w-full rounded-lg border p-3" placeholder="Stock" value={newProductStock} onChange={(e) => setNewProductStock(Number(e.target.value))} />
+                  <select className="w-full rounded-lg border p-3" value={newProductStatus} onChange={(e) => setNewProductStatus(e.target.value as any)}>
+                    <option value="draft">draft</option>
+                    <option value="published">published</option>
+                  </select>
+                </div>
+                <textarea className="w-full rounded-lg border p-3" rows={3} placeholder="Description (optional)" value={newProductDescription} onChange={(e) => setNewProductDescription(e.target.value)} />
+                <div className="grid gap-3 md:grid-cols-2">
+                  <input className="w-full rounded-lg border p-3" placeholder="Image URL (optional)" value={newProductImageUrl} onChange={(e) => setNewProductImageUrl(e.target.value)} />
+                  <input className="w-full rounded-lg border p-3" placeholder="Image key/id (optional)" value={newProductImageKey} onChange={(e) => setNewProductImageKey(e.target.value)} />
+                </div>
+                <div className="flex justify-end">
+                  <button className="rounded-lg bg-[#2F3E34] px-4 py-3 text-white">Add product</button>
                 </div>
               </form>
+
               <div className="mt-8 rounded-xl border bg-[#F2EAD8] p-5">
                 {products.length ? (
                   products.map((p) => (
@@ -301,14 +353,11 @@ export function AdminPanel() {
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-[#5C4033]">{money(p.price)} · {p.stock} in stock</span>
-                          <button type="button" className="rounded-lg border px-3 py-2 text-sm" onClick={() => startEditProduct(p)}>
-                            Edit
-                          </button>
-                          <button type="button" className="rounded-lg border px-3 py-2 text-sm text-red-700" onClick={() => void deleteProduct(p._id)}>
-                            Delete
-                          </button>
+                          <button type="button" className="rounded-lg border px-3 py-2 text-sm" onClick={() => startEditProduct(p)}>Edit</button>
+                          <button type="button" className="rounded-lg border px-3 py-2 text-sm text-red-700" onClick={() => void deleteProduct(p._id)}>Delete</button>
                         </div>
                       </div>
+
                       {editingProductId === p._id && (
                         <div className="mt-4 grid gap-3 rounded-xl border p-4">
                           <div className="grid gap-3 md:grid-cols-2">
@@ -328,13 +377,9 @@ export function AdminPanel() {
                             <input className="w-full rounded-lg border p-3" value={String(productDraft.imageUrl ?? "")} onChange={(e) => setProductDraft((d) => ({ ...d, imageUrl: e.target.value }))} placeholder="Image URL" />
                             <input className="w-full rounded-lg border p-3" value={String(productDraft.imageKey ?? "")} onChange={(e) => setProductDraft((d) => ({ ...d, imageKey: e.target.value }))} placeholder="Image key/id" />
                           </div>
-                          <div className="flex gap-2 justify-end">
-                            <button type="button" className="rounded-lg border px-3 py-2 text-sm" onClick={() => { setEditingProductId(null); setProductDraft({}); }}>
-                              Cancel
-                            </button>
-                            <button type="button" className="rounded-lg bg-[#2F3E34] px-3 py-2 text-sm text-white" onClick={() => void saveProduct()}>
-                              Save
-                            </button>
+                          <div className="flex justify-end gap-2">
+                            <button type="button" className="rounded-lg border px-3 py-2 text-sm" onClick={() => { setEditingProductId(null); setProductDraft({}); }}>Cancel</button>
+                            <button type="button" className="rounded-lg bg-[#2F3E34] px-3 py-2 text-sm text-white" onClick={() => void saveProduct()}>Save</button>
                           </div>
                         </div>
                       )}
@@ -405,9 +450,7 @@ export function AdminPanel() {
                     <div className="mt-4 space-y-2">
                       {(o.items ?? []).map((it, idx) => (
                         <div key={`${o._id}.${idx}`} className="flex justify-between text-sm">
-                          <span className="text-[#2B2B2B]">
-                            {it.quantity}× {it.name} <span className="text-[#5C4033]">({it.sku})</span>
-                          </span>
+                          <span className="text-[#2B2B2B]">{it.quantity}× {it.name} <span className="text-[#5C4033]">({it.sku})</span></span>
                           <span className="text-[#5C4033]">{money(it.unitPrice * it.quantity)}</span>
                         </div>
                       ))}
@@ -430,11 +473,12 @@ export function AdminPanel() {
                   {definedKeys.map((k) => (
                     <button key={k} type="button" onClick={() => setContentKey(k)} className={`w-full rounded-lg px-3 py-2 text-left text-sm ${k === contentKey ? "bg-[#2F3E34] text-white" : "hover:bg-black/5"}`}>
                       {k}
-                      {!contentKeys.includes(k) && <span className="ml-2 text-xs opacity-80">(default)</span>}
+                      {contentKeys.includes(k) ? "" : <span className="ml-2 text-xs opacity-80">(default)</span>}
                     </button>
                   ))}
                 </div>
-                <p className="mt-4 text-xs text-[#5C4033]">Advanced: open any key</p>
+
+                <p className="mt-4 text-xs text-[#5C4033]">Open any key</p>
                 <div className="mt-2 flex gap-2">
                   <input className="w-full rounded-lg border p-2 text-sm" placeholder="custom key" value={customKey} onChange={(e) => setCustomKey(e.target.value)} />
                   <button
@@ -453,21 +497,44 @@ export function AdminPanel() {
               </div>
 
               <div className="rounded-xl border bg-[#F2EAD8] p-4">
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-medium">{contentKey}</p>
-                    <p className="text-xs text-[#5C4033]">Edit JSON for this page/section and Save.</p>
+                    <p className="text-xs text-[#5C4033]">Edit with inputs and cards. Save when done.</p>
                   </div>
-                  <div className="flex gap-2">
-                    <button type="button" className="rounded-lg border px-3 py-2 text-sm" onClick={() => setContentDraft(JSON.stringify(cmsDefaults[contentKey] ?? {}, null, 2))}>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      className="rounded-lg border px-3 py-2 text-sm"
+                      onClick={() => {
+                        setContentValue(cmsDefaults[contentKey] ?? {});
+                        setAdvancedDraft(JSON.stringify(cmsDefaults[contentKey] ?? {}, null, 2));
+                      }}
+                    >
                       Reset to defaults
                     </button>
                     <button type="button" className="rounded-lg bg-[#2F3E34] px-3 py-2 text-sm text-white" onClick={saveContent}>
                       Save
                     </button>
+                    <button type="button" className="rounded-lg border px-3 py-2 text-sm" onClick={() => setShowAdvanced((v) => !v)}>
+                      {showAdvanced ? "Hide advanced" : "Advanced"}
+                    </button>
                   </div>
                 </div>
-                <textarea className="mt-3 h-[520px] w-full rounded-lg border p-3 font-mono text-xs" value={contentDraft} onChange={(e) => setContentDraft(e.target.value)} />
+
+                {showAdvanced ? (
+                  <textarea className="mt-3 h-[420px] w-full rounded-lg border p-3 font-mono text-xs" value={advancedDraft} onChange={(e) => setAdvancedDraft(e.target.value)} />
+                ) : (
+                  <div className="mt-3">
+                    <CmsFormEditor
+                      value={contentValue}
+                      onChange={(next) => {
+                        setContentValue(next);
+                        setAdvancedDraft(JSON.stringify(next, null, 2));
+                      }}
+                    />
+                  </div>
+                )}
                 <div className="mt-2 text-xs text-[#5C4033]">{contentStatus}</div>
               </div>
             </div>
