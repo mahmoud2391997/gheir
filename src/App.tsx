@@ -1,22 +1,22 @@
 import { useEffect } from "react";
 import { Route, Switch, useLocation } from "wouter";
 import { InquiryProvider } from "./components/Inquiry";
-import { Home } from "./pages/Home";
-import { Systems } from "./pages/Systems";
-import { SystemDetail } from "./pages/SystemDetail";
-import { Collection } from "./pages/Collection";
-import { RoomDetail } from "./pages/RoomDetail";
-import { Design } from "./pages/Design";
-import { Khanqah } from "./pages/Khanqah";
-import { Studio } from "./pages/Studio";
-import { Consultation } from "./pages/Consultation";
-import { Visualization } from "./pages/Visualization";
-import { Showroom } from "./pages/Showroom";
-import { Pricing } from "./pages/Pricing";
-import { Partners } from "./pages/Partners";
-import { Contact } from "./pages/Contact";
-import { PieceDetail } from "./pages/PieceDetail";
-import { NotFound } from "./pages/NotFound";
+import { Home } from "./legacy-pages/Home";
+import { Systems } from "./legacy-pages/Systems";
+import { SystemDetail } from "./legacy-pages/SystemDetail";
+import { Collection } from "./legacy-pages/Collection";
+import { RoomDetail } from "./legacy-pages/RoomDetail";
+import { Design } from "./legacy-pages/Design";
+import { Khanqah } from "./legacy-pages/Khanqah";
+import { Studio } from "./legacy-pages/Studio";
+import { Consultation } from "./legacy-pages/Consultation";
+import { Visualization } from "./legacy-pages/Visualization";
+import { Showroom } from "./legacy-pages/Showroom";
+import { Pricing } from "./legacy-pages/Pricing";
+import { Partners } from "./legacy-pages/Partners";
+import { Contact } from "./legacy-pages/Contact";
+import { PieceDetail } from "./legacy-pages/PieceDetail";
+import { NotFound } from "./legacy-pages/NotFound";
 import AdminPanel from "./components/AdminPanel";
 
 function ScrollToTop() {
