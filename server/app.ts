@@ -87,6 +87,14 @@ export function createExpressApp() {
   const app = express();
   app.set("trust proxy", 1); app.use(express.json({ limit: "1mb" }));
   app.use((req, _res, next) => { const raw = req.headers.cookie || ""; (req as Request & { cookies: Record<string, string> }).cookies = Object.fromEntries(raw.split(";").filter(Boolean).map((part) => { const [key, ...value] = part.trim().split("="); return [key, decodeURIComponent(value.join("="))]; })); next(); });
+
+  // Ensure browser preflights for POS endpoints receive CORS headers.
+  // (Express doesn't automatically apply per-route middleware for OPTIONS when only GET/POST are defined.)
+  app.options(/^\/api\/pos\/.*$/, (req, res) => {
+    applyPosCors(req, res);
+    return res.status(204).end();
+  });
+
   app.get("/api/health", (_req, res) => res.json({ status: "ok", service: "gher", timestamp: new Date().toISOString() }));
   app.get("/api/content/:key", async (req, res) => { try { await connectMongo(); const doc = await Content.findOne({ key: req.params.key }).lean(); if (!doc) return res.status(404).json({ key: req.params.key, data: null }); res.json({ key: doc.key, data: doc.data }); } catch (error) { console.error("content fetch failed", error); res.status(500).json({ error: "Unable to load content" }); } });
   app.get("/api/products", async (req, res) => { try { const category = typeof req.query.category === "string" ? req.query.category.trim() : ""; await connectMongo(); const query: any = { status: "published" }; if (category) query.category = category; const products = await Product.find(query).sort({ createdAt: -1 }).lean(); res.json({ products }); } catch (error) { console.error("products fetch failed", error); res.status(500).json({ error: "Unable to load products" }); } });
