@@ -10,6 +10,7 @@ type Product = {
   _id: string;
   name: string;
   slug: string;
+  sku?: string;
   category: string;
   price: number;
   description?: string;
@@ -50,6 +51,7 @@ export function ProductDetail() {
   if (!product) return <NotFound />;
 
   const image = product.imageUrl ?? (product.imageKey ? `/api/images/${product.imageKey}` : "/images/hero-alt.jpg");
+  const sku = (product.sku ?? product.slug).trim();
   const saved = wishlist.has(product.slug);
 
   return (
@@ -71,7 +73,7 @@ export function ProductDetail() {
               className="bg-forest px-5 py-3 text-ivory"
               onClick={() =>
                 cart.add(
-                  { id: product.slug, slug: product.slug, sku: product.slug, name: product.name, image, unitPrice: product.price, currency: "EGP" },
+                  { id: product.slug, slug: product.slug, sku, name: product.name, image, unitPrice: product.price, currency: "EGP" },
                   1,
                 )
               }
@@ -86,7 +88,7 @@ export function ProductDetail() {
                   id: product.slug,
                   kind: "product",
                   slug: product.slug,
-                  sku: product.slug,
+                  sku,
                   name: product.name,
                   image,
                   unitPrice: product.price,

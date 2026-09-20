@@ -9,6 +9,7 @@ type Product = {
   _id: string;
   name: string;
   slug: string;
+  sku?: string;
   category: string;
   price: number;
   description?: string;
@@ -71,6 +72,7 @@ export function Products() {
           <div className="mt-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {products.map((p) => {
               const image = p.imageUrl ?? (p.imageKey ? `/api/images/${p.imageKey}` : "/images/hero-alt.jpg");
+              const sku = (p.sku ?? p.slug).trim();
               const wish = wishlist.has(p.slug);
               return (
                 <article key={p._id} className="border border-walnut/15">
@@ -92,7 +94,7 @@ export function Products() {
                         className="bg-forest px-4 py-2 text-sm text-ivory"
                         onClick={() =>
                           cart.add(
-                            { id: p.slug, slug: p.slug, sku: p.slug, name: p.name, image, unitPrice: p.price, currency: "EGP" },
+                            { id: p.slug, slug: p.slug, sku, name: p.name, image, unitPrice: p.price, currency: "EGP" },
                             1,
                           )
                         }
@@ -107,7 +109,7 @@ export function Products() {
                             id: p.slug,
                             kind: "product",
                             slug: p.slug,
-                            sku: p.slug,
+                            sku,
                             name: p.name,
                             image,
                             unitPrice: p.price,

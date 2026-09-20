@@ -11,7 +11,7 @@ export function Pricing() {
   const { data } = useContent("page.pricing", cmsDefaults["page.pricing"]);
   const cart = useCart();
   const wishlist = useWishlist();
-  const [products, setProducts] = useState<{ _id: string; name: string; slug: string; category: string; price: number; description?: string; imageUrl?: string; imageKey?: string }[]>([]);
+  const [products, setProducts] = useState<{ _id: string; name: string; slug: string; sku?: string; category: string; price: number; description?: string; imageUrl?: string; imageKey?: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -76,7 +76,7 @@ export function Pricing() {
                           {
                             id: p.slug,
                             slug: p.slug,
-                            sku: p.slug,
+                            sku: (p.sku ?? p.slug).trim(),
                             name: p.name,
                             image: p.imageUrl ?? (p.imageKey ? `/api/images/${p.imageKey}` : "/images/hero-alt.jpg"),
                             unitPrice: p.price,
@@ -98,7 +98,7 @@ export function Pricing() {
                           id: p.slug,
                           kind: "product",
                           slug: p.slug,
-                          sku: p.slug,
+                          sku: (p.sku ?? p.slug).trim(),
                           name: p.name,
                           image: p.imageUrl ?? (p.imageKey ? `/api/images/${p.imageKey}` : "/images/hero-alt.jpg"),
                           unitPrice: p.price,
