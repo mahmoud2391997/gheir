@@ -31,7 +31,8 @@ function isRateLimited(ip: string) {
   return current.count > MAX_LOGIN_ATTEMPTS;
 }
 const DEFAULT_ADMIN_EMAIL = "admin@example.com";
-const DEFAULT_ADMIN_PASSWORD_HASH = "$2b$12$sOXS9AA6KjYlis/LRdyAcuafKp/OL235O/14UzSEdHWVLzL.HUcMG";
+// Development fallback only; production should always provide ADMIN_PASSWORD_HASH.
+const DEFAULT_ADMIN_PASSWORD_HASH = "$2b$12$XvCH15bVgBBip553iWMhLuFCftQglIuJpm/cKedOwvIATNwYuTsuC";
 const secret = () => process.env.JWT_SECRET || "development-jwt-secret-change-me";
 const adminEmail = () => process.env.ADMIN_EMAIL?.trim() || DEFAULT_ADMIN_EMAIL;
 const adminPasswordHash = () => {
