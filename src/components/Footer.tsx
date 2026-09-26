@@ -1,4 +1,6 @@
-import { Link } from "wouter";
+"use client";
+
+import { Link } from "../lib/router";
 import { Logo } from "./Logo";
 import { SHOWROOM } from "../data/catalog";
 import { useContent } from "../lib/useContent";

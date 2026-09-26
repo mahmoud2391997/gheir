@@ -1,5 +1,7 @@
+"use client";
+
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { useLocation } from "wouter";
+import { useLocation } from "./router";
 
 export type Locale = "en" | "ar";
 

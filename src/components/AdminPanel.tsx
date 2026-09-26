@@ -1,8 +1,11 @@
+"use client";
+
 import { useEffect, useMemo, useState } from "react";
 import { Logo } from "./Logo";
 import { cmsDefaults, type CmsKey } from "../cms/defaults";
 import { CmsFormEditor } from "./CmsFormEditor";
 import { pieces } from "../data/catalog";
+import { readError } from "../lib/read-error";
 
 type Product = {
   _id: string;
@@ -190,7 +193,7 @@ export function AdminPanel() {
         currency: "EGP",
       }),
     });
-    if (!response.ok) return setError((await response.json()).error ?? "Unable to create product");
+    if (!response.ok) return setError(readError(await response.json(), "Unable to create product"));
 
     setNewProductName("");
     setNewProductSku("");
@@ -229,7 +232,7 @@ export function AdminPanel() {
         stock: Number(productDraft.stock ?? 0),
       }),
     });
-    if (!response.ok) return setError((await response.json()).error ?? "Unable to save product");
+    if (!response.ok) return setError(readError(await response.json(), "Unable to save product"));
     setEditingProductId(null);
     setProductDraft({});
     await load();
@@ -238,7 +241,7 @@ export function AdminPanel() {
   const deleteProduct = async (id: string) => {
     setError("");
     const response = await fetch(`/api/admin/products/${encodeURIComponent(id)}`, { method: "DELETE", credentials: "include" });
-    if (!response.ok && response.status !== 204) return setError((await response.json()).error ?? "Unable to delete product");
+    if (!response.ok && response.status !== 204) return setError(readError(await response.json(), "Unable to delete product"));
     if (editingProductId === id) {
       setEditingProductId(null);
       setProductDraft({});
@@ -271,7 +274,7 @@ export function AdminPanel() {
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
       if (response.status === 409) return setImportStatus("Some items already exist. Refreshing…");
-      return setError(json.error ?? "Unable to import piece");
+      return setError(readError(json, "Unable to import piece"));
     }
     setImportStatus("Imported.");
     await load();
@@ -298,7 +301,7 @@ export function AdminPanel() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     });
-    if (!response.ok) throw new Error((await response.json()).error ?? "Unable to update order");
+    if (!response.ok) throw new Error(readError(await response.json(), "Unable to update order"));
     setOrders((prev) => prev.map((o) => (o._id === id ? { ...o, status } : o)));
   };
 
@@ -312,7 +315,7 @@ export function AdminPanel() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data }),
       });
-      if (!response.ok) throw new Error((await response.json()).error ?? "Unable to save content");
+      if (!response.ok) throw new Error(readError(await response.json(), "Unable to save content"));
       setContentStatus("Saved.");
       if (!contentKeys.includes(contentKey)) setContentKeys((prev) => [...prev, contentKey].sort());
     } catch (e) {

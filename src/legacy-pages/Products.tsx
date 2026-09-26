@@ -1,10 +1,13 @@
+"use client";
+
 import { Photo } from "../components/Photo";
 import { useEffect, useMemo, useState } from "react";
-import { Link, useLocation } from "wouter";
+import { Link, useLocation } from "../lib/router";
 import { Layout, Eyebrow } from "../components/Layout";
 import { formatEGP } from "../data/catalog";
 import { useCart } from "../lib/cart";
 import { useWishlist } from "../lib/wishlist";
+import { readError } from "../lib/read-error";
 
 type Product = {
   _id: string;
@@ -43,7 +46,7 @@ export function Products() {
         const url = category ? `/api/products?category=${encodeURIComponent(category)}` : "/api/products";
         const response = await fetch(url);
         const json = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(typeof json.error === "string" ? json.error : "Unable to load products");
+        if (!response.ok) throw new Error(readError(json, "Unable to load products"));
         if (!cancelled) setProducts(json.products ?? []);
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "Unable to load products");

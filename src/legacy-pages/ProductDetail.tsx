@@ -1,11 +1,14 @@
+"use client";
+
 import { Photo } from "../components/Photo";
 import { useEffect, useState } from "react";
-import { Link, useParams } from "wouter";
+import { Link, useParams } from "../lib/router";
 import { Layout, Eyebrow } from "../components/Layout";
 import { formatEGP } from "../data/catalog";
 import { NotFound } from "./NotFound";
 import { useCart } from "../lib/cart";
 import { useWishlist } from "../lib/wishlist";
+import { readError } from "../lib/read-error";
 
 type Product = {
   _id: string;
@@ -40,7 +43,7 @@ export function ProductDetail() {
           if (!cancelled) setProduct(null);
           return;
         }
-        if (!response.ok) throw new Error(typeof json.error === "string" ? json.error : "Unable to load product");
+        if (!response.ok) throw new Error(readError(json, "Unable to load product"));
         if (!cancelled) setProduct(json.product ?? null);
       } catch (e) {
         if (!cancelled) {

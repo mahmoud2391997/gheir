@@ -1,5 +1,7 @@
+"use client";
+
 import { Photo } from "../components/Photo";
-import { Link, useParams } from "wouter";
+import { Link, useParams } from "../lib/router";
 import { Layout, Eyebrow } from "../components/Layout";
 import { formatEGP, pieceBySlug, pieces, systemById } from "../data/catalog";
 import { NotFound } from "./NotFound";
@@ -19,7 +21,7 @@ export function PieceDetail() {
   const { t } = useLocale();
   const live = useLivePrices();
   if (!piece) return <NotFound />;
-  const price = live[piece.sku]?.price ?? piece.priceFrom;
+  const price = live[piece.sku]?.price;
   const system = systemById(piece.system);
   const related = pieces.filter((p) => p.system === piece.system && p.slug !== piece.slug).slice(0, 3);
   const saved = wishlist.has(piece.slug);
@@ -41,7 +43,7 @@ export function PieceDetail() {
           <p lang="ar" className="mt-2 text-xl">
             {piece.nameAr}
           </p>
-          <p className="mt-6 font-display text-4xl text-walnut">{t.from} {formatEGP(price)}</p>
+          {typeof price === "number" && <p className="mt-6 font-display text-4xl text-walnut">{t.from} {formatEGP(price)}</p>}
           <p className="mt-6 leading-relaxed">{piece.story}</p>
           <p lang="ar" className="mt-3">
             {piece.storyAr}
@@ -54,10 +56,11 @@ export function PieceDetail() {
             <button
               type="button"
               className="bg-forest px-5 py-3 text-ivory"
-              onClick={() => open({ title: piece.name, summary: `${piece.sku} ${t.from} ${formatEGP(price)}` })}
+              onClick={() => open({ title: piece.name, summary: typeof price === "number" ? `${piece.sku} ${t.from} ${formatEGP(price)}` : piece.sku })}
             >
               Inquire
             </button>
+            {typeof price === "number" && (
             <button
               type="button"
               className="border border-forest px-5 py-3 text-center"
@@ -70,6 +73,7 @@ export function PieceDetail() {
             >
               Add to cart
             </button>
+            )}
             <button
               type="button"
               className="border border-forest px-5 py-3 text-center"

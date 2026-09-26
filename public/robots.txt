@@ -1,8 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /admin
-Disallow: /api/
-Disallow: /cart
-Disallow: /wishlist
-
-Sitemap: https://gheir.vercel.app/sitemap.xml

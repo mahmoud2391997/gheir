@@ -1,3 +1,5 @@
+"use client";
+
 import { Photo } from "../components/Photo";
 import { Layout, Reveal, Eyebrow } from "../components/Layout";
 import { journey } from "../data/catalog";

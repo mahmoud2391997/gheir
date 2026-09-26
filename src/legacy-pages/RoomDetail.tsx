@@ -1,17 +1,24 @@
+"use client";
+
 import { Photo } from "../components/Photo";
-import { Link, useParams } from "wouter";
+import { Link, useParams } from "../lib/router";
 import { Layout, Eyebrow } from "../components/Layout";
 import { ProductCard } from "../components/Cards";
 import { formatEGP, pieceBySlug, roomBySlug } from "../data/catalog";
 import { NotFound } from "./NotFound";
 import { useInquiry } from "../components/Inquiry";
+import { summedLivePrice, useLivePrices } from "../lib/useLivePrices";
 
 export function RoomDetail() {
   const { slug } = useParams<{ slug: string }>();
   const room = roomBySlug(slug ?? "");
   const { open } = useInquiry();
+  const live = useLivePrices();
   if (!room) return <NotFound />;
-  const items = room.pieces.map(pieceBySlug).filter(Boolean);
+  const items = room.pieces.flatMap((slug) => {
+    const piece = pieceBySlug(slug);
+    return piece ? [piece] : [];
+  });
 
   return (
     <Layout>
@@ -36,7 +43,9 @@ export function RoomDetail() {
         </div>
         <aside className="lg:col-span-5 border border-walnut/20 p-6">
           <p className="font-mono text-[11px] uppercase tracking-widest text-walnut">Indicative total</p>
-          <p className="mt-2 font-display text-5xl text-forest">{formatEGP(room.total)}</p>
+          {summedLivePrice(live, items.map((piece) => piece.sku)) != null && (
+            <p className="mt-2 font-display text-5xl text-forest">{formatEGP(summedLivePrice(live, items.map((piece) => piece.sku)) as number)}</p>
+          )}
           <p className="mt-2 text-sm text-charcoal/70">Pieces priced as starting points. Customization follows.</p>
           <div className="mt-6 flex flex-col gap-2">
             <Link href="/design" className="bg-forest px-4 py-3 text-center text-sm font-medium text-ivory">

@@ -1,12 +1,16 @@
+"use client";
+
 import { Photo } from "../components/Photo";
-import { Link } from "wouter";
+import { Link } from "../lib/router";
 import { Layout, Reveal, Eyebrow } from "../components/Layout";
-import { formatEGP, systems } from "../data/catalog";
+import { formatEGP, pieces, systems } from "../data/catalog";
+import { lowestLivePrice, useLivePrices } from "../lib/useLivePrices";
 import { useContent } from "../lib/useContent";
 import { cmsDefaults } from "../cms/defaults";
 
 export function Systems() {
   const { data } = useContent("page.systems", cmsDefaults["page.systems"]);
+  const live = useLivePrices();
   return (
     <Layout>
       <section className="mx-auto max-w-7xl px-5 py-16 lg:px-8">
@@ -37,7 +41,9 @@ export function Systems() {
                   {s.name} <span className="italic text-sand">{s.nameAr}</span>
                 </h2>
                 <p className="mt-5 max-w-md text-ivory/80">{s.philosophy}</p>
-                <p className="mt-6 font-mono text-sm text-sand">from {formatEGP(s.from)}</p>
+                {lowestLivePrice(live, pieces.filter((piece) => piece.system === s.id).map((piece) => piece.sku)) != null && (
+                  <p className="mt-6 font-mono text-sm text-sand">from {formatEGP(lowestLivePrice(live, pieces.filter((piece) => piece.system === s.id).map((piece) => piece.sku)) ?? 0)}</p>
+                )}
               </div>
             </Link>
           </Reveal>

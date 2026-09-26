@@ -1,5 +1,7 @@
+"use client";
+
 import { useState } from "react";
-import { Link, useLocation } from "wouter";
+import { Link, useLocation } from "../lib/router";
 import { Heart, Menu, ShoppingBag, X } from "lucide-react";
 import { Logo } from "./Logo";
 import { useInquiry } from "./Inquiry";

@@ -1,3 +1,5 @@
+"use client";
+
 import { Photo } from "./Photo";
 
 export function Logo({

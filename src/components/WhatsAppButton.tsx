@@ -1,3 +1,5 @@
+"use client";
+
 import { MessageCircle } from "lucide-react";
 import { WHATSAPP_URL } from "../data/catalog";
 import { useInquiry } from "./Inquiry";

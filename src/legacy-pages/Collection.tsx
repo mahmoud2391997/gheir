@@ -1,3 +1,5 @@
+"use client";
+
 import { useMemo, useState } from "react";
 import { Layout, Eyebrow } from "../components/Layout";
 import { RoomCard } from "../components/Cards";

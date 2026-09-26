@@ -1,10 +1,12 @@
-import { Link } from "wouter";
+"use client";
+
+import { Link } from "../lib/router";
 import type { Piece, Room } from "../data/catalog";
-import { formatEGP } from "../data/catalog";
+import { formatEGP, pieces } from "../data/catalog";
 import { useCart } from "../lib/cart";
 import { useWishlist } from "../lib/wishlist";
 import { useLocale } from "../lib/locale";
-import { useLivePrices } from "../lib/useLivePrices";
+import { summedLivePrice, useLivePrices } from "../lib/useLivePrices";
 import { Photo } from "./Photo";
 
 export function ProductCard({ piece, large = false }: { piece: Piece; large?: boolean }) {
@@ -12,7 +14,7 @@ export function ProductCard({ piece, large = false }: { piece: Piece; large?: bo
   const wishlist = useWishlist();
   const { t, pick, locale } = useLocale();
   const live = useLivePrices();
-  const price = live[piece.sku]?.price ?? piece.priceFrom;
+  const price = live[piece.sku]?.price;
   const saved = wishlist.has(piece.slug);
   return (
     <article className="group">
@@ -35,8 +37,9 @@ export function ProductCard({ piece, large = false }: { piece: Piece; large?: bo
           </p>
         </div>
         <div className="flex flex-col items-end gap-2">
-          <p className="font-mono text-xs text-walnut">{t.from} {formatEGP(price)}</p>
+          {typeof price === "number" && <p className="font-mono text-xs text-walnut">{t.from} {formatEGP(price)}</p>}
           <div className="flex flex-wrap justify-end gap-2">
+            {typeof price === "number" && (
             <button
               type="button"
               className="border border-forest px-3 py-1.5 text-[11px] font-mono uppercase tracking-widest text-forest"
@@ -49,6 +52,7 @@ export function ProductCard({ piece, large = false }: { piece: Piece; large?: bo
             >
               {t.add}
             </button>
+            )}
             <button
               type="button"
               className={`border px-3 py-1.5 text-[11px] font-mono uppercase tracking-widest ${
@@ -78,6 +82,11 @@ export function ProductCard({ piece, large = false }: { piece: Piece; large?: bo
 
 export function RoomCard({ room, featured = false }: { room: Room; featured?: boolean }) {
   const { pick, locale, heading } = useLocale();
+  const live = useLivePrices();
+  const total = summedLivePrice(
+    live,
+    room.pieces.map((slug) => pieces.find((piece) => piece.slug === slug)?.sku || "").filter(Boolean),
+  );
   return (
     <Link href={`/collection/${room.slug}`} className="group block">
       <div className={`img-frame ${featured ? "aspect-[16/10]" : "aspect-[4/3]"}`}>
@@ -91,7 +100,7 @@ export function RoomCard({ room, featured = false }: { room: Room; featured?: bo
             {pick(room.nameAr, room.name)}
           </p>
         </div>
-        <p className="font-mono text-xs text-walnut">{formatEGP(room.total)}</p>
+        {total != null && <p className="font-mono text-xs text-walnut">{formatEGP(total)}</p>}
       </div>
     </Link>
   );

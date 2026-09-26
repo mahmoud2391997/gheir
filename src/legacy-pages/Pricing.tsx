@@ -1,5 +1,7 @@
+"use client";
+
 import { Photo } from "../components/Photo";
-import { Link } from "wouter";
+import { Link } from "../lib/router";
 import { Layout, Eyebrow } from "../components/Layout";
 import { formatEGP } from "../data/catalog";
 import { useContent } from "../lib/useContent";
@@ -7,6 +9,7 @@ import { cmsDefaults } from "../cms/defaults";
 import { useEffect, useState } from "react";
 import { useCart } from "../lib/cart";
 import { useWishlist } from "../lib/wishlist";
+import { readError } from "../lib/read-error";
 
 export function Pricing() {
   const { data } = useContent("page.pricing", cmsDefaults["page.pricing"]);
@@ -24,7 +27,7 @@ export function Pricing() {
       try {
         const response = await fetch(`/api/products?category=${encodeURIComponent(data.productCategory)}`);
         const json = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(typeof json.error === "string" ? json.error : "Unable to load products");
+        if (!response.ok) throw new Error(readError(json, "Unable to load products"));
         if (!cancelled) setProducts(json.products ?? []);
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "Unable to load products");

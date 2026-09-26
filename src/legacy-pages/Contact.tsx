@@ -1,3 +1,5 @@
+"use client";
+
 import { Photo } from "../components/Photo";
 import { useState } from "react";
 import { Layout, Eyebrow } from "../components/Layout";

@@ -1,15 +1,19 @@
+"use client";
+
 import { Photo } from "../components/Photo";
-import { Link, useParams } from "wouter";
+import { Link, useParams } from "../lib/router";
 import { Layout, Eyebrow } from "../components/Layout";
 import { ProductCard } from "../components/Cards";
 import { formatEGP, pieces, systemById } from "../data/catalog";
 import { NotFound } from "./NotFound";
 import { useInquiry } from "../components/Inquiry";
+import { lowestLivePrice, useLivePrices } from "../lib/useLivePrices";
 
 export function SystemDetail() {
   const { slug } = useParams<{ slug: string }>();
   const system = systemById(slug ?? "");
   const { open } = useInquiry();
+  const live = useLivePrices();
   if (!system) return <NotFound />;
   const related = pieces.filter((p) => p.system === system.id);
 
@@ -23,7 +27,9 @@ export function SystemDetail() {
           <h1 className="mt-3 font-display text-7xl leading-none sm:text-8xl">
             {system.name} <span className="italic text-sand">{system.nameAr}</span>
           </h1>
-          <p className="mt-4 font-mono text-sand">from {formatEGP(system.from)}</p>
+          {lowestLivePrice(live, related.map((piece) => piece.sku)) != null && (
+            <p className="mt-4 font-mono text-sand">from {formatEGP(lowestLivePrice(live, related.map((piece) => piece.sku)) ?? 0)}</p>
+          )}
         </div>
       </section>
 

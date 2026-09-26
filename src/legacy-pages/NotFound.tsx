@@ -1,5 +1,7 @@
+"use client";
+
 import { Photo } from "../components/Photo";
-import { Link } from "wouter";
+import { Link } from "../lib/router";
 import { Layout } from "../components/Layout";
 import { Logo } from "../components/Logo";
 

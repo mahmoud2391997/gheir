@@ -36,3 +36,20 @@ export function useLivePrices() {
 
   return bySku;
 }
+
+export function lowestLivePrice(bySku: Record<string, LivePrice>, skus: string[]) {
+  const values = skus.map((sku) => bySku[sku]?.price).filter((price): price is number => typeof price === "number");
+  if (!values.length) return null;
+  return Math.min(...values);
+}
+
+export function summedLivePrice(bySku: Record<string, LivePrice>, skus: string[]) {
+  if (!skus.length) return null;
+  let total = 0;
+  for (const sku of skus) {
+    const price = bySku[sku]?.price;
+    if (typeof price !== "number") return null;
+    total += price;
+  }
+  return total;
+}

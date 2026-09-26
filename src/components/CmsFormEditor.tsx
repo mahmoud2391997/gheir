@@ -1,3 +1,5 @@
+"use client";
+
 import { Photo } from "./Photo";
 import { useMemo, useState } from "react";
 

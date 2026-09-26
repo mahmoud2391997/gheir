@@ -1,7 +1,9 @@
+"use client";
+
 import { Photo } from "../components/Photo";
 import { Layout, Eyebrow } from "../components/Layout";
 import { SHOWROOM, WHATSAPP_URL } from "../data/catalog";
-import { Link } from "wouter";
+import { Link } from "../lib/router";
 import { useContent } from "../lib/useContent";
 import { cmsDefaults } from "../cms/defaults";
 

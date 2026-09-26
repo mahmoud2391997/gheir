@@ -1,6 +1,8 @@
+"use client";
+
 import { Photo } from "../components/Photo";
 import { useMemo, useState } from "react";
-import { Link } from "wouter";
+import { Link } from "../lib/router";
 import { Layout, Eyebrow } from "../components/Layout";
 import { useInquiry } from "../components/Inquiry";
 import { ProductCard } from "../components/Cards";

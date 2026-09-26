@@ -8,6 +8,7 @@ export type Piece = {
   system: SystemId;
   sku: string;
   edition?: string;
+  /** Editorial reference used when an admin imports a piece. Checkout never reads this. */
   priceFrom: number;
   image: string;
   story: string;

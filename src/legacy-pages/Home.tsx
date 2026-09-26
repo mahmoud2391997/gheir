@@ -1,13 +1,16 @@
+"use client";
+
 import { Photo } from "../components/Photo";
-import { Link } from "wouter";
+import { Link } from "../lib/router";
 import { motion } from "motion/react";
 import { Layout, Reveal, Eyebrow } from "../components/Layout";
 import { Logo } from "../components/Logo";
 import { useInquiry } from "../components/Inquiry";
-import { formatEGP, rooms, systems } from "../data/catalog";
+import { formatEGP, pieces, rooms, systems } from "../data/catalog";
 import { useContent } from "../lib/useContent";
 import { cmsDefaults } from "../cms/defaults";
 import { useLocale } from "../lib/locale";
+import { lowestLivePrice, useLivePrices } from "../lib/useLivePrices";
 
 const threeWays = [
   rooms.find((r) => r.slug === "the-unbeige-living")!,
@@ -19,6 +22,7 @@ export function Home() {
   const { open } = useInquiry();
   const { pick, heading, t } = useLocale();
   const { data } = useContent("page.home", cmsDefaults["page.home"]);
+  const live = useLivePrices();
 
   return (
     <Layout>
@@ -163,7 +167,9 @@ export function Home() {
                   <h3 className="font-display text-4xl">
                     {pick(sys.name, sys.nameAr)} <span className="italic text-sand">{pick(sys.nameAr, sys.name)}</span>
                   </h3>
-                  <p className="font-mono text-xs">{t.from} {formatEGP(sys.from)}</p>
+                  {lowestLivePrice(live, pieces.filter((piece) => piece.system === sys.id).map((piece) => piece.sku)) != null && (
+                    <p className="font-mono text-xs">{t.from} {formatEGP(lowestLivePrice(live, pieces.filter((piece) => piece.system === sys.id).map((piece) => piece.sku)) ?? 0)}</p>
+                  )}
                 </div>
               </Link>
             ))}

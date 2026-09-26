@@ -1,13 +1,16 @@
+"use client";
+
 import { Photo } from "../components/Photo";
 import { useMemo, useState } from "react";
-import { Link } from "wouter";
+import { Link } from "../lib/router";
 import { Layout, Eyebrow } from "../components/Layout";
 import { useCart } from "../lib/cart";
 import { formatEGP } from "../data/catalog";
+import { readError } from "../lib/read-error";
 
 type OrderPayload = {
   customer: { name: string; phone: string; email?: string; address?: string };
-  items: { id: string; slug: string; sku: string; name: string; image?: string; unitPrice: number; quantity: number; currency: "EGP" }[];
+  items: { sku: string; quantity: number }[];
 };
 
 export function CartPage() {
@@ -19,13 +22,14 @@ export function CartPage() {
   const [error, setError] = useState("");
   const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle");
   const [orderId, setOrderId] = useState<string>("");
+  const [idempotencyKey] = useState(() => (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}`));
 
   const canCheckout = cart.items.length > 0 && name.trim() && phone.trim() && status !== "submitting";
 
   const payload = useMemo<OrderPayload>(
     () => ({
       customer: { name: name.trim(), phone: phone.trim(), email: email.trim() || undefined, address: address.trim() || undefined },
-      items: cart.items.map((i) => ({ id: i.id, slug: i.slug, sku: i.sku, name: i.name, image: i.image, unitPrice: i.unitPrice, quantity: i.quantity, currency: i.currency })),
+      items: cart.items.map((i) => ({ sku: i.sku, quantity: i.quantity })),
     }),
     [address, cart.items, email, name, phone],
   );
@@ -116,11 +120,11 @@ export function CartPage() {
                   try {
                     const response = await fetch("/api/orders", {
                       method: "POST",
-                      headers: { "Content-Type": "application/json" },
+                      headers: { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey },
                       body: JSON.stringify(payload),
                     });
                     const json = await response.json();
-                    if (!response.ok) throw new Error(json.error ?? "Unable to place order");
+                    if (!response.ok) throw new Error(readError(json, "Unable to place order"));
                     setOrderId(String(json.orderId ?? ""));
                     setStatus("success");
                   } catch (err) {

@@ -1,5 +1,7 @@
+"use client";
+
 import { useEffect } from "react";
-import { useLocation } from "wouter";
+import { useLocation } from "../lib/router";
 import { pieceBySlug, roomBySlug, systemById } from "../data/catalog";
 import { useLocale } from "../lib/locale";
 
