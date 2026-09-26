@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Route, Switch, useLocation } from "wouter";
 import { InquiryProvider } from "./components/Inquiry";
 import { LocaleProvider } from "./lib/locale";
+import { DocumentHead } from "./components/DocumentHead";
 import { CartProvider } from "./lib/cart";
 import { WishlistProvider } from "./lib/wishlist";
 import { Home } from "./legacy-pages/Home";
@@ -41,6 +42,7 @@ export default function App() {
       <CartProvider>
         <InquiryProvider>
           <ScrollToTop />
+          <DocumentHead />
           <Switch>
             <Route path="/admin" component={AdminPanel} />
             <Route path="/cart" component={CartPage} />
