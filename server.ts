@@ -1,3 +1,8 @@
+/**
+ * Local Node entry for `npm run dev` and `npm start`.
+ * Vercel does not run this file. Production is `vite build` plus the
+ * serverless function in `api/index.ts`, which serves the same Express app.
+ */
 import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';

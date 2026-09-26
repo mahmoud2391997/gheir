@@ -15,8 +15,7 @@
   ],
   "functions": {
     "api/index.ts": {
-      "maxDuration": 30,
-      "includeFiles": "server/db/schema.sql"
+      "maxDuration": 30
     }
   }
 }
