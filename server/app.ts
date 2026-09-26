@@ -8,6 +8,7 @@ import mongoose from "mongoose";
 import { connectMongo } from "./mongodb/client.js";
 import { Product, Lead, Content, Order, Sale } from "./mongodb/models.js";
 import { downloadAsset, uploadAsset } from "./mongodb/gridfs.js";
+import { assertProductionSecrets, DEV_ADMIN_PASSWORD_HASH, DEV_JWT_SECRET } from "./secrets.js";
 
 dotenv.config();
 const COOKIE = "gher_admin";
@@ -32,13 +33,11 @@ function isRateLimited(ip: string) {
   return current.count > MAX_LOGIN_ATTEMPTS;
 }
 const DEFAULT_ADMIN_EMAIL = "admin@example.com";
-// Development fallback only; production should always provide ADMIN_PASSWORD_HASH.
-const DEFAULT_ADMIN_PASSWORD_HASH = "$2b$12$6TXWk8ODs9L09dOTbOt4BeSYxC/AVU82R/GApFjIZf24yEwkaxNGy";
-const secret = () => process.env.JWT_SECRET || "development-jwt-secret-change-me";
+const secret = () => process.env.JWT_SECRET?.trim() || DEV_JWT_SECRET;
 const adminEmail = () => process.env.ADMIN_EMAIL?.trim() || DEFAULT_ADMIN_EMAIL;
 const adminPasswordHash = () => {
   const configuredHash = process.env.ADMIN_PASSWORD_HASH?.trim();
-  return configuredHash && /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(configuredHash) ? configuredHash : DEFAULT_ADMIN_PASSWORD_HASH;
+  return configuredHash && /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(configuredHash) ? configuredHash : DEV_ADMIN_PASSWORD_HASH;
 };
 type CookieRequest = Request & { cookies?: Record<string, string> };
 function requireAdmin(req: CookieRequest, res: Response, next: NextFunction) { const token = req.cookies?.[COOKIE]; try { if (!token) throw new Error("missing"); jwt.verify(token, secret()); next(); } catch { res.status(401).json({ error: "Admin authentication required" }); } }
@@ -84,6 +83,7 @@ async function getPosInventoryMeta() {
 
 dotenv.config();
 export function createExpressApp() {
+  assertProductionSecrets();
   const app = express();
   app.set("trust proxy", 1); app.use(express.json({ limit: "1mb" }));
   app.use((req, _res, next) => { const raw = req.headers.cookie || ""; (req as Request & { cookies: Record<string, string> }).cookies = Object.fromEntries(raw.split(";").filter(Boolean).map((part) => { const [key, ...value] = part.trim().split("="); return [key, decodeURIComponent(value.join("="))]; })); next(); });

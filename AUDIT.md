@@ -24,8 +24,10 @@ Gemini, Google OAuth, the token vault, and the Nexus UI (`AITerminal`, CRM, ERP,
 
 `vite.config.ts` still ignored a `.tmp-nexus-identity` path and mentioned an AI Studio HMR switch. Those comments and the ignore are removed. Vite’s own dev server is not the app entry; `server.ts` owns dev.
 
-## Secrets (handled in the following change, not here)
+## Secrets
 
-Admin auth is real and used. `JWT_SECRET` and `ADMIN_PASSWORD_HASH` still fall back to development defaults inside `server/app.ts` when unset. This cleanup does not change that behavior. The next change makes production refuse those placeholders.
+Admin auth is real and used (`JWT_SECRET`, `ADMIN_PASSWORD_HASH`). Google OAuth, Gemini, and the AES token vault are not referenced by current feature code.
 
-This environment cannot read the Vercel project’s environment variable values, so this audit does not claim what is currently set in the Vercel dashboard.
+`server/secrets.ts` runs when the Express app is created. On Vercel (`VERCEL=1`) or when `NODE_ENV=production`, startup throws if `JWT_SECRET` or `ADMIN_PASSWORD_HASH` is missing or still a known placeholder, including the local development admin hash. Local `npm run dev` still allows the development fallback.
+
+This environment cannot read Vercel project environment values, so this repo cannot confirm or rotate whatever is already stored in the dashboard. If production was relying on the development fallback, the API will refuse to start until both values are set to real secrets.
