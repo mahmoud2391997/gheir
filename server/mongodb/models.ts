@@ -31,43 +31,43 @@ export type SaleDocument = {
 export type ProductDocumentV2 = ProductDocument & { sku?: string };
 const productSchema = new Schema<ProductDocumentV2>(
   {
-    name: { type: String, required: true, trim: true },
-    slug: { type: String, required: true, unique: true, index: true },
-    sku: { type: String, trim: true, index: true },
-    category: { type: String, required: true, trim: true },
+    name: { type: String, required: true, trim: true, maxlength: 200 },
+    slug: { type: String, required: true, unique: true, index: true, maxlength: 120 },
+    sku: { type: String, trim: true, index: true, maxlength: 80 },
+    category: { type: String, required: true, trim: true, maxlength: 80 },
     price: { type: Number, required: true, min: 0 },
-    currency: { type: String, default: "EGP", uppercase: true },
+    currency: { type: String, default: "EGP", uppercase: true, maxlength: 8 },
     stock: { type: Number, default: 0, min: 0 },
     status: { type: String, enum: ["published", "draft"], default: "draft", index: true },
-    imageKey: String,
-    imageUrl: String,
-    description: String,
+    imageKey: { type: String, maxlength: 80 },
+    imageUrl: { type: String, maxlength: 500 },
+    description: { type: String, maxlength: 4000 },
   },
   { timestamps: true },
 );
 productSchema.index({ sku: 1 }, { unique: true, sparse: true });
-const leadSchema = new Schema<LeadDocument>({ name: { type: String, required: true, trim: true }, email: { type: String, lowercase: true, trim: true, index: true }, phone: { type: String, trim: true, index: true }, company: String, source: { type: String, default: "website" }, status: { type: String, enum: ["new", "contacted", "qualified", "won", "lost"], default: "new", index: true }, score: { type: Number, min: 0, max: 100 }, notes: String, message: String }, { timestamps: true });
+const leadSchema = new Schema<LeadDocument>({ name: { type: String, required: true, trim: true, maxlength: 120 }, email: { type: String, lowercase: true, trim: true, index: true, maxlength: 200 }, phone: { type: String, trim: true, index: true, maxlength: 40 }, company: { type: String, maxlength: 160 }, source: { type: String, default: "website", maxlength: 80 }, status: { type: String, enum: ["new", "contacted", "qualified", "won", "lost"], default: "new", index: true }, score: { type: Number, min: 0, max: 100 }, notes: { type: String, maxlength: 2000 }, message: { type: String, maxlength: 2000 } }, { timestamps: true });
 const contentSchema = new Schema<ContentDocument>({ key: { type: String, required: true, trim: true, unique: true, index: true }, data: { type: Schema.Types.Mixed, required: true } }, { timestamps: true, minimize: false });
 const orderSchema = new Schema<OrderDocument>(
   {
     status: { type: String, enum: ["new", "confirmed", "in_progress", "delivered", "cancelled"], default: "new", index: true },
     customer: {
-      name: { type: String, required: true, trim: true },
-      phone: { type: String, required: true, trim: true },
-      email: { type: String, trim: true },
-      address: { type: String, trim: true },
+      name: { type: String, required: true, trim: true, maxlength: 120 },
+      phone: { type: String, required: true, trim: true, maxlength: 40 },
+      email: { type: String, trim: true, maxlength: 200 },
+      address: { type: String, trim: true, maxlength: 400 },
     },
     currency: { type: String, enum: ["EGP"], default: "EGP" },
     subtotal: { type: Number, required: true, min: 0 },
     items: [
       {
-        id: { type: String, required: true, trim: true },
-        slug: { type: String, required: true, trim: true },
-        sku: { type: String, required: true, trim: true },
-        name: { type: String, required: true, trim: true },
-        image: { type: String, trim: true },
+        id: { type: String, required: true, trim: true, maxlength: 120 },
+        slug: { type: String, required: true, trim: true, maxlength: 120 },
+        sku: { type: String, required: true, trim: true, maxlength: 80 },
+        name: { type: String, required: true, trim: true, maxlength: 200 },
+        image: { type: String, trim: true, maxlength: 500 },
         unitPrice: { type: Number, required: true, min: 0 },
-        quantity: { type: Number, required: true, min: 1 },
+        quantity: { type: Number, required: true, min: 1, max: 20 },
       },
     ],
     notes: { type: String, trim: true },

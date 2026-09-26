@@ -15,6 +15,8 @@ const COOKIE = "gher_admin";
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const MAX_LOGIN_ATTEMPTS = 5;
 const loginAttempts = new Map<string, { count: number; resetAt: number }>();
+const writeAttempts = new Map<string, { count: number; resetAt: number }>();
+const MAX_PUBLIC_WRITES = 10;
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 }, fileFilter: (_req, file, cb) => cb(null, ["image/jpeg", "image/png", "image/webp"].includes(file.mimetype)) });
 function hasValidImageSignature(buffer: Buffer, mimetype: string) {
   if (mimetype === "image/jpeg") return buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
@@ -22,15 +24,37 @@ function hasValidImageSignature(buffer: Buffer, mimetype: string) {
   if (mimetype === "image/webp") return buffer.subarray(0, 4).toString("ascii") === "RIFF" && buffer.subarray(8, 12).toString("ascii") === "WEBP";
   return false;
 }
-function isRateLimited(ip: string) {
+function hitLimit(store: Map<string, { count: number; resetAt: number }>, key: string, max: number, windowMs: number) {
   const now = Date.now();
-  const current = loginAttempts.get(ip);
+  const current = store.get(key);
   if (!current || current.resetAt <= now) {
-    loginAttempts.set(ip, { count: 1, resetAt: now + LOGIN_WINDOW_MS });
+    store.set(key, { count: 1, resetAt: now + windowMs });
     return false;
   }
   current.count += 1;
-  return current.count > MAX_LOGIN_ATTEMPTS;
+  return current.count > max;
+}
+function isRateLimited(ip: string) {
+  return hitLimit(loginAttempts, ip || "unknown", MAX_LOGIN_ATTEMPTS, LOGIN_WINDOW_MS);
+}
+function isWriteLimited(ip: string | undefined) {
+  return hitLimit(writeAttempts, ip || "unknown", MAX_PUBLIC_WRITES, LOGIN_WINDOW_MS);
+}
+function clip(value: unknown, max: number) {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  return trimmed.slice(0, max);
+}
+const PRODUCT_PATCH_FIELDS = ["name", "slug", "sku", "category", "price", "currency", "stock", "status", "imageKey", "imageUrl", "description"] as const;
+function pickProductPatch(body: unknown) {
+  if (!body || typeof body !== "object") return {};
+  const source = body as Record<string, unknown>;
+  const update: Record<string, unknown> = {};
+  for (const field of PRODUCT_PATCH_FIELDS) {
+    if (Object.prototype.hasOwnProperty.call(source, field) && source[field] !== undefined) update[field] = source[field];
+  }
+  return update;
 }
 const DEFAULT_ADMIN_EMAIL = "admin@example.com";
 const secret = () => process.env.JWT_SECRET?.trim() || DEV_JWT_SECRET;
@@ -97,30 +121,56 @@ export function createExpressApp() {
 
   app.get("/api/health", (_req, res) => res.json({ status: "ok", service: "gher", timestamp: new Date().toISOString() }));
   app.get("/api/content/:key", async (req, res) => { try { await connectMongo(); const doc = await Content.findOne({ key: req.params.key }).lean(); if (!doc) return res.status(404).json({ key: req.params.key, data: null }); res.json({ key: doc.key, data: doc.data }); } catch (error) { console.error("content fetch failed", error); res.status(500).json({ error: "Unable to load content" }); } });
-  app.get("/api/products", async (req, res) => { try { const category = typeof req.query.category === "string" ? req.query.category.trim() : ""; await connectMongo(); const query: any = { status: "published" }; if (category) query.category = category; const products = await Product.find(query).sort({ createdAt: -1 }).lean(); res.json({ products }); } catch (error) { console.error("products fetch failed", error); res.status(500).json({ error: "Unable to load products" }); } });
-  app.get("/api/products/:slug", async (req, res) => { try { await connectMongo(); const product = await Product.findOne({ slug: req.params.slug, status: "published" }).lean(); if (!product) return res.status(404).json({ error: "Product not found" }); res.json({ product }); } catch (error) { console.error("product fetch failed", error); res.status(500).json({ error: "Unable to load product" }); } });
-  app.post("/api/leads", async (req, res) => { try { const { name, email, phone, company, message, source = "website" } = req.body ?? {}; if (!name || typeof name !== "string" || !name.trim()) return res.status(400).json({ error: "name is required" }); const safeEmail = typeof email === "string" && email.trim() ? email.trim() : undefined; const safePhone = typeof phone === "string" && phone.trim() ? phone.trim() : undefined; if (!safeEmail && !safePhone) return res.status(400).json({ error: "email or phone is required" }); await connectMongo(); const lead = await Lead.create({ name: name.trim(), email: safeEmail, phone: safePhone, company: typeof company === "string" && company.trim() ? company.trim() : undefined, source: typeof source === "string" && source.trim() ? source.trim() : "website", status: "new", message: typeof message === "string" && message.trim() ? message.trim() : undefined, notes: typeof message === "string" && message.trim() ? message.trim() : undefined }); res.status(201).json({ lead }); } catch (error) { console.error("lead create failed", error); res.status(500).json({ error: "Unable to save lead" }); } });
+  app.get("/api/products", async (req, res) => { try { const category = typeof req.query.category === "string" ? req.query.category.trim().slice(0, 80) : ""; await connectMongo(); const query: any = { status: "published" }; if (category) query.category = category; const products = await Product.find(query).sort({ createdAt: -1 }).select("-stock").lean(); res.json({ products }); } catch (error) { console.error("products fetch failed", error); res.status(500).json({ error: "Unable to load products" }); } });
+  app.get("/api/products/:slug", async (req, res) => { try { await connectMongo(); const product = await Product.findOne({ slug: req.params.slug, status: "published" }).select("-stock").lean(); if (!product) return res.status(404).json({ error: "Product not found" }); res.json({ product }); } catch (error) { console.error("product fetch failed", error); res.status(500).json({ error: "Unable to load product" }); } });
+  app.post("/api/leads", async (req, res) => {
+    try {
+      if (isWriteLimited(req.ip)) return res.status(429).json({ error: "Too many submissions" });
+      const name = clip(req.body?.name, 120);
+      if (!name) return res.status(400).json({ error: "name is required" });
+      const email = clip(req.body?.email, 200);
+      const phone = clip(req.body?.phone, 40);
+      if (!email && !phone) return res.status(400).json({ error: "email or phone is required" });
+      const message = clip(req.body?.message, 2000);
+      await connectMongo();
+      const lead = await Lead.create({
+        name,
+        email,
+        phone,
+        company: clip(req.body?.company, 160),
+        source: clip(req.body?.source, 80) ?? "website",
+        status: "new",
+        message,
+        notes: message,
+      });
+      res.status(201).json({ lead });
+    } catch (error) {
+      console.error("lead create failed", error);
+      res.status(500).json({ error: "Unable to save lead" });
+    }
+  });
   app.post("/api/orders", async (req, res) => {
     try {
+      if (isWriteLimited(req.ip)) return res.status(429).json({ error: "Too many submissions" });
       const { customer, items } = req.body ?? {};
       if (!customer || typeof customer !== "object") return res.status(400).json({ error: "customer is required" });
-      const name = typeof customer.name === "string" ? customer.name.trim() : "";
-      const phone = typeof customer.phone === "string" ? customer.phone.trim() : "";
-      const email = typeof customer.email === "string" ? customer.email.trim() : undefined;
-      const address = typeof customer.address === "string" ? customer.address.trim() : undefined;
+      const name = clip(customer.name, 120) ?? "";
+      const phone = clip(customer.phone, 40) ?? "";
+      const email = clip(customer.email, 200);
+      const address = clip(customer.address, 400);
       if (!name) return res.status(400).json({ error: "customer.name is required" });
       if (!phone) return res.status(400).json({ error: "customer.phone is required" });
-      if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ error: "items are required" });
+      if (!Array.isArray(items) || items.length === 0 || items.length > 30) return res.status(400).json({ error: "items are required" });
 
       const normalized = items
         .map((it: any) => ({
-          id: String(it.id ?? "").trim(),
-          slug: String(it.slug ?? "").trim(),
-          sku: String(it.sku ?? "").trim(),
-          name: String(it.name ?? "").trim(),
-          image: typeof it.image === "string" ? it.image : undefined,
+          id: String(it.id ?? "").trim().slice(0, 120),
+          slug: String(it.slug ?? "").trim().slice(0, 120),
+          sku: String(it.sku ?? "").trim().slice(0, 80),
+          name: String(it.name ?? "").trim().slice(0, 200),
+          image: typeof it.image === "string" ? it.image.trim().slice(0, 500) : undefined,
           unitPrice: Number(it.unitPrice ?? 0),
-          quantity: Math.max(1, Math.floor(Number(it.quantity ?? 1))),
+          quantity: Math.min(20, Math.max(1, Math.floor(Number(it.quantity ?? 1)))),
         }))
         .filter((it: any) => it.id && it.slug && it.sku && it.name && Number.isFinite(it.unitPrice) && it.unitPrice >= 0);
       if (normalized.length === 0) return res.status(400).json({ error: "no valid items" });
@@ -236,13 +286,13 @@ export function createExpressApp() {
       res.status(400).json({ error: error instanceof Error ? error.message : "Invalid product" });
     }
   });
-  app.patch("/api/admin/products/:id", async (req, res) => { try { await connectMongo(); const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true }); if (!product) return res.status(404).json({ error: "Product not found" }); res.json({ product }); } catch (error) { res.status(400).json({ error: error instanceof Error ? error.message : "Invalid product" }); } });
+  app.patch("/api/admin/products/:id", async (req, res) => { try { const update = pickProductPatch(req.body); if (!Object.keys(update).length) return res.status(400).json({ error: "No product fields to update" }); await connectMongo(); const product = await Product.findByIdAndUpdate(req.params.id, update, { new: true, runValidators: true }); if (!product) return res.status(404).json({ error: "Product not found" }); res.json({ product }); } catch (error) { res.status(400).json({ error: error instanceof Error ? error.message : "Invalid product" }); } });
   app.delete("/api/admin/products/:id", async (req, res) => { await connectMongo(); const product = await Product.findByIdAndDelete(req.params.id); if (!product) return res.status(404).json({ error: "Product not found" }); res.status(204).end(); });
   app.get("/api/admin/leads", async (_req, res) => { try { await connectMongo(); res.json({ leads: await Lead.find().sort({ createdAt: -1 }).lean() }); } catch { res.status(500).json({ error: "Unable to load leads" }); } });
-  app.patch("/api/admin/leads/:id", async (req, res) => { if (req.body.status && !validLeadStatuses.includes(req.body.status)) return res.status(400).json({ error: "Invalid lead status" }); await connectMongo(); const lead = await Lead.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true }); if (!lead) return res.status(404).json({ error: "Lead not found" }); res.json({ lead }); });
+  app.patch("/api/admin/leads/:id", async (req, res) => { const update: Record<string, unknown> = {}; if (req.body?.status !== undefined) { if (!validLeadStatuses.includes(req.body.status)) return res.status(400).json({ error: "Invalid lead status" }); update.status = req.body.status; } if (typeof req.body?.notes === "string") update.notes = req.body.notes.trim().slice(0, 2000); if (req.body?.score !== undefined) update.score = Number(req.body.score); if (!Object.keys(update).length) return res.status(400).json({ error: "No lead fields to update" }); await connectMongo(); const lead = await Lead.findByIdAndUpdate(req.params.id, update, { new: true, runValidators: true }); if (!lead) return res.status(404).json({ error: "Lead not found" }); res.json({ lead }); });
   app.delete("/api/admin/leads/:id", async (req, res) => { await connectMongo(); const lead = await Lead.findByIdAndDelete(req.params.id); if (!lead) return res.status(404).json({ error: "Lead not found" }); res.status(204).end(); });
   app.get("/api/admin/orders", async (_req, res) => { try { await connectMongo(); res.json({ orders: await Order.find().sort({ createdAt: -1 }).lean() }); } catch (error) { console.error("orders list failed", error); res.status(500).json({ error: "Unable to load orders" }); } });
-  app.patch("/api/admin/orders/:id", async (req, res) => { try { const status = req.body?.status; const valid = ["new", "confirmed", "in_progress", "delivered", "cancelled"]; if (status && !valid.includes(status)) return res.status(400).json({ error: "Invalid order status" }); await connectMongo(); const order = await Order.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true }).lean(); if (!order) return res.status(404).json({ error: "Order not found" }); res.json({ order }); } catch (error) { console.error("order update failed", error); res.status(500).json({ error: "Unable to update order" }); } });
+  app.patch("/api/admin/orders/:id", async (req, res) => { try { const status = req.body?.status; const valid = ["new", "confirmed", "in_progress", "delivered", "cancelled"]; if (!valid.includes(status)) return res.status(400).json({ error: "Invalid order status" }); await connectMongo(); const order = await Order.findByIdAndUpdate(req.params.id, { status }, { new: true, runValidators: true }).lean(); if (!order) return res.status(404).json({ error: "Order not found" }); res.json({ order }); } catch (error) { console.error("order update failed", error); res.status(500).json({ error: "Unable to update order" }); } });
   app.post("/api/admin/assets", upload.single("file"), async (req, res) => { if (!req.file || !hasValidImageSignature(req.file.buffer, req.file.mimetype)) return res.status(400).json({ error: "A JPG, PNG, or WebP image up to 5MB is required" }); const id = await uploadAsset(Readable.from(req.file.buffer), req.file.originalname, req.file.mimetype); res.status(201).json({ id, url: `/api/images/${id}` }); });
   app.get("/api/images/:id", async (req, res) => { try { const stream = await downloadAsset(req.params.id); stream.on("file", (file) => { res.setHeader("Content-Type", file.contentType || "application/octet-stream"); res.setHeader("Cache-Control", "public, max-age=31536000, immutable"); }); stream.on("error", () => res.status(404).end()); stream.pipe(res); } catch { res.status(404).end(); } });
 
