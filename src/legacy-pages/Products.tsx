@@ -42,8 +42,8 @@ export function Products() {
       try {
         const url = category ? `/api/products?category=${encodeURIComponent(category)}` : "/api/products";
         const response = await fetch(url);
-        const json = await response.json();
-        if (!response.ok) throw new Error(json.error ?? "Unable to load products");
+        const json = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(typeof json.error === "string" ? json.error : "Unable to load products");
         if (!cancelled) setProducts(json.products ?? []);
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "Unable to load products");

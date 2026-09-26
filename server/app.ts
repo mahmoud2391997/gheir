@@ -127,11 +127,17 @@ export function createExpressApp() {
 
       await connectMongo();
 
-      // Only decrement stock for items that exist as DB products with matching SKU.
+      // Known SKUs are priced from Mongo, the same source the POS writes.
+      // Catalog-only lines have no inventory row, so they keep the submitted price.
       const skus = normalized.map((i) => i.sku);
-      const products = await Product.find({ sku: { $in: skus } }, { sku: 1 }).lean();
-      const skuSet = new Set(products.map((p: any) => String(p.sku ?? "")));
-      const stockItems = normalized.filter((i) => skuSet.has(i.sku)).map((i) => ({ sku: i.sku, quantity: i.quantity }));
+      const products = await Product.find({ sku: { $in: skus } }, { sku: 1, name: 1, price: 1 }).lean();
+      const bySku = new Map(products.map((p: any) => [String(p.sku ?? ""), p]));
+      const priced = normalized.map((it: any) => {
+        const row = bySku.get(it.sku);
+        if (!row || !Number.isFinite(Number(row.price))) return it;
+        return { ...it, name: String(row.name ?? it.name), unitPrice: Number(row.price) };
+      });
+      const stockItems = priced.filter((i: any) => bySku.has(i.sku)).map((i: any) => ({ sku: i.sku, quantity: i.quantity }));
 
       const session = await mongoose.startSession();
       let orderId = "";
@@ -152,7 +158,7 @@ export function createExpressApp() {
             }
           }
 
-          const subtotal = normalized.reduce((sum: number, it: any) => sum + it.unitPrice * it.quantity, 0);
+          const subtotal = priced.reduce((sum: number, it: any) => sum + it.unitPrice * it.quantity, 0);
           const order = await Order.create(
             [
               {
@@ -160,7 +166,7 @@ export function createExpressApp() {
                 customer: { name, phone, email, address },
                 currency: "EGP",
                 subtotal,
-                items: normalized,
+                items: priced,
               },
             ],
             { session },

@@ -26,19 +26,27 @@ export function ProductDetail() {
   const wishlist = useWishlist();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
+    setError("");
     void (async () => {
       try {
         const response = await fetch(`/api/products/${encodeURIComponent(slug ?? "")}`);
-        const json = await response.json();
-        if (!response.ok) {
+        const json = await response.json().catch(() => ({}));
+        if (response.status === 404) {
           if (!cancelled) setProduct(null);
           return;
         }
+        if (!response.ok) throw new Error(typeof json.error === "string" ? json.error : "Unable to load product");
         if (!cancelled) setProduct(json.product ?? null);
+      } catch (e) {
+        if (!cancelled) {
+          setProduct(null);
+          setError(e instanceof Error ? e.message : "Unable to load product");
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -49,6 +57,13 @@ export function ProductDetail() {
   }, [slug]);
 
   if (loading) return <div className="p-10 text-sm">Loading…</div>;
+  if (error) {
+    return (
+      <Layout>
+        <p className="mx-auto max-w-7xl px-5 py-16 text-sm text-red-700">{error}</p>
+      </Layout>
+    );
+  }
   if (!product) return <NotFound />;
 
   const image = product.imageUrl ?? (product.imageKey ? `/api/images/${product.imageKey}` : "/images/hero-alt.jpg");

@@ -7,6 +7,8 @@ import { useInquiry } from "../components/Inquiry";
 import { ProductCard } from "../components/Cards";
 import { useCart } from "../lib/cart";
 import { useWishlist } from "../lib/wishlist";
+import { useLocale } from "../lib/locale";
+import { useLivePrices } from "../lib/useLivePrices";
 
 export function PieceDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -14,7 +16,10 @@ export function PieceDetail() {
   const { open } = useInquiry();
   const cart = useCart();
   const wishlist = useWishlist();
+  const { t } = useLocale();
+  const live = useLivePrices();
   if (!piece) return <NotFound />;
+  const price = live[piece.sku]?.price ?? piece.priceFrom;
   const system = systemById(piece.system);
   const related = pieces.filter((p) => p.system === piece.system && p.slug !== piece.slug).slice(0, 3);
   const saved = wishlist.has(piece.slug);
@@ -36,7 +41,7 @@ export function PieceDetail() {
           <p lang="ar" className="mt-2 text-xl">
             {piece.nameAr}
           </p>
-          <p className="mt-6 font-display text-4xl text-walnut">from {formatEGP(piece.priceFrom)}</p>
+          <p className="mt-6 font-display text-4xl text-walnut">{t.from} {formatEGP(price)}</p>
           <p className="mt-6 leading-relaxed">{piece.story}</p>
           <p lang="ar" className="mt-3">
             {piece.storyAr}
@@ -49,7 +54,7 @@ export function PieceDetail() {
             <button
               type="button"
               className="bg-forest px-5 py-3 text-ivory"
-              onClick={() => open({ title: piece.name, summary: `${piece.sku} from ${formatEGP(piece.priceFrom)}` })}
+              onClick={() => open({ title: piece.name, summary: `${piece.sku} ${t.from} ${formatEGP(price)}` })}
             >
               Inquire
             </button>
@@ -58,7 +63,7 @@ export function PieceDetail() {
               className="border border-forest px-5 py-3 text-center"
               onClick={() =>
                 cart.add(
-                  { id: piece.slug, slug: piece.slug, sku: piece.sku, name: piece.name, nameAr: piece.nameAr, image: piece.image, unitPrice: piece.priceFrom, currency: "EGP" },
+                  { id: piece.slug, slug: piece.slug, sku: piece.sku, name: piece.name, nameAr: piece.nameAr, image: piece.image, unitPrice: price, currency: "EGP" },
                   1,
                 )
               }
@@ -76,7 +81,7 @@ export function PieceDetail() {
                   sku: piece.sku,
                   name: piece.name,
                   image: piece.image,
-                  unitPrice: piece.priceFrom,
+                  unitPrice: price,
                   currency: "EGP",
                 })
               }

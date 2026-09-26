@@ -4,12 +4,15 @@ import { formatEGP } from "../data/catalog";
 import { useCart } from "../lib/cart";
 import { useWishlist } from "../lib/wishlist";
 import { useLocale } from "../lib/locale";
+import { useLivePrices } from "../lib/useLivePrices";
 import { Photo } from "./Photo";
 
 export function ProductCard({ piece, large = false }: { piece: Piece; large?: boolean }) {
   const cart = useCart();
   const wishlist = useWishlist();
   const { t, pick, locale } = useLocale();
+  const live = useLivePrices();
+  const price = live[piece.sku]?.price ?? piece.priceFrom;
   const saved = wishlist.has(piece.slug);
   return (
     <article className="group">
@@ -32,14 +35,14 @@ export function ProductCard({ piece, large = false }: { piece: Piece; large?: bo
           </p>
         </div>
         <div className="flex flex-col items-end gap-2">
-          <p className="font-mono text-xs text-walnut">{t.from} {formatEGP(piece.priceFrom)}</p>
+          <p className="font-mono text-xs text-walnut">{t.from} {formatEGP(price)}</p>
           <div className="flex flex-wrap justify-end gap-2">
             <button
               type="button"
               className="border border-forest px-3 py-1.5 text-[11px] font-mono uppercase tracking-widest text-forest"
               onClick={() =>
                 cart.add(
-                  { id: piece.slug, slug: piece.slug, sku: piece.sku, name: piece.name, nameAr: piece.nameAr, image: piece.image, unitPrice: piece.priceFrom, currency: "EGP" },
+                  { id: piece.slug, slug: piece.slug, sku: piece.sku, name: piece.name, nameAr: piece.nameAr, image: piece.image, unitPrice: price, currency: "EGP" },
                   1,
                 )
               }
@@ -59,7 +62,7 @@ export function ProductCard({ piece, large = false }: { piece: Piece; large?: bo
                   sku: piece.sku,
                   name: piece.name,
                   image: piece.image,
-                  unitPrice: piece.priceFrom,
+                  unitPrice: price,
                   currency: "EGP",
                 })
               }
