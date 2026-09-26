@@ -1,3 +1,4 @@
+import { Photo } from "../components/Photo";
 import { Link } from "wouter";
 import { Layout, Reveal, Eyebrow } from "../components/Layout";
 import { formatEGP, systems } from "../data/catalog";
@@ -28,7 +29,7 @@ export function Systems() {
               className={`grid items-stretch lg:grid-cols-2 ${i % 2 === 1 ? "lg:[&>div:first-child]:order-2" : ""}`}
             >
               <div className="img-frame min-h-[52vh]">
-                <img src={s.image} alt={`${s.name} system`} />
+                <Photo src={s.image} alt={`${s.name} system`} />
               </div>
               <div className="flex flex-col justify-center bg-forest px-8 py-14 text-ivory lg:px-16">
                 <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-sand">{s.tag}</p>

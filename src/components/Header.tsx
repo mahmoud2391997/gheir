@@ -5,20 +5,22 @@ import { Logo } from "./Logo";
 import { useInquiry } from "./Inquiry";
 import { useCart } from "../lib/cart";
 import { useWishlist } from "../lib/wishlist";
+import { useLocale } from "../lib/locale";
 
 const links = [
-  { href: "/systems", label: "Systems", badge: "New" },
-  { href: "/collection", label: "Collection" },
-  { href: "/design", label: "Design" },
-  { href: "/khanqah", label: "Khanqah" },
-  { href: "/contact", label: "Contact" },
-];
+  { href: "/systems", key: "systems", badge: true },
+  { href: "/collection", key: "collection" },
+  { href: "/design", key: "design" },
+  { href: "/khanqah", key: "khanqah" },
+  { href: "/contact", key: "contact" },
+] as const;
 
 export function Header() {
   const [location] = useLocation();
   const { open } = useInquiry();
   const cart = useCart();
   const wishlist = useWishlist();
+  const { t, toggle, locale } = useLocale();
   const [mobile, setMobile] = useState(false);
   const dark = location === "/" || location.startsWith("/khanqah") || location.startsWith("/showroom");
 
@@ -50,10 +52,10 @@ export function Header() {
                       : "text-charcoal/70 hover:text-forest"
                 }`}
               >
-                {l.label}
-                {l.badge && (
-                  <sup className={`ml-1 font-sans text-[9px] tracking-normal ${dark ? "text-sand" : "text-walnut"}`}>
-                    {l.badge}
+                {t[l.key]}
+                {"badge" in l && l.badge && (
+                  <sup className={`ms-1 font-sans text-[9px] tracking-normal ${dark ? "text-sand" : "text-walnut"}`}>
+                    {t.new}
                   </sup>
                 )}
               </Link>
@@ -67,13 +69,13 @@ export function Header() {
             className={`relative inline-flex items-center gap-2 px-3 py-2 font-mono text-[11px] tracking-[0.18em] uppercase ${
               dark ? "text-ivory/85 hover:text-ivory" : "text-charcoal/70 hover:text-forest"
             }`}
-            aria-label="Wishlist"
+            aria-label={t.wishlist}
           >
             <Heart size={18} />
-            <span className="hidden sm:inline">Wishlist</span>
+            <span className="hidden sm:inline">{t.wishlist}</span>
             {wishlist.count > 0 && (
               <span
-                className={`absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] ${
+                className={`absolute -end-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] ${
                   dark ? "bg-sand text-forest" : "bg-forest text-ivory"
                 }`}
               >
@@ -86,12 +88,12 @@ export function Header() {
             className={`relative inline-flex items-center gap-2 px-3 py-2 font-mono text-[11px] tracking-[0.18em] uppercase ${
               dark ? "text-ivory/85 hover:text-ivory" : "text-charcoal/70 hover:text-forest"
             }`}
-            aria-label="Cart"
+            aria-label={t.cart}
           >
             <ShoppingBag size={18} />
-            <span className="hidden sm:inline">Cart</span>
+            <span className="hidden sm:inline">{t.cart}</span>
             {cart.count > 0 && (
-              <span className={`absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] ${
+              <span className={`absolute -end-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] ${
                 dark ? "bg-sand text-forest" : "bg-forest text-ivory"
               }`}>
                 {cart.count}
@@ -105,13 +107,23 @@ export function Header() {
               dark ? "bg-sand text-forest hover:bg-ivory" : "bg-forest text-ivory hover:bg-charcoal"
             }`}
           >
-            Inquire
+            {t.inquire}
+          </button>
+          <button
+            type="button"
+            onClick={toggle}
+            className={`px-2 py-2 font-mono text-[11px] tracking-[0.14em] uppercase ${
+              dark ? "text-sand hover:text-ivory" : "text-walnut hover:text-forest"
+            }`}
+            aria-label={locale === "ar" ? "Switch to English" : "التبديل إلى العربية"}
+          >
+            {t.langLabel}
           </button>
           <button
             type="button"
             className="lg:hidden p-2"
             aria-expanded={mobile}
-            aria-label={mobile ? "Close menu" : "Open menu"}
+            aria-label={mobile ? t.closeMenu : t.openMenu}
             onClick={() => setMobile((v) => !v)}
           >
             {mobile ? <X size={22} /> : <Menu size={22} />}
@@ -129,7 +141,7 @@ export function Header() {
                   className="block font-display text-3xl"
                   onClick={() => setMobile(false)}
                 >
-                  {l.label}
+                  {t[l.key]}
                 </Link>
               </li>
             ))}
@@ -142,7 +154,7 @@ export function Header() {
                   open();
                 }}
               >
-                Start a conversation
+                {t.startConversation}
               </button>
             </li>
           </ul>

@@ -1,3 +1,4 @@
+import { Photo } from "../components/Photo";
 import { Link, useParams } from "wouter";
 import { Layout, Eyebrow } from "../components/Layout";
 import { ProductCard } from "../components/Cards";
@@ -15,7 +16,7 @@ export function SystemDetail() {
   return (
     <Layout>
       <section className="relative min-h-[70vh] bg-forest text-ivory">
-        <img src={system.image} alt="" className="absolute inset-0 h-full w-full object-cover opacity-80" />
+        <Photo src={system.image} alt="" className="absolute inset-0 h-full w-full object-cover opacity-80" />
         <div className="absolute inset-0 bg-forest/50" />
         <div className="relative mx-auto flex min-h-[70vh] max-w-7xl flex-col justify-end px-5 pb-14 lg:px-8">
           <Eyebrow>{system.tag}</Eyebrow>

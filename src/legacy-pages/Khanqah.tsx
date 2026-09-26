@@ -1,3 +1,4 @@
+import { Photo } from "../components/Photo";
 import { Layout, Reveal, Eyebrow } from "../components/Layout";
 import { journey } from "../data/catalog";
 import { useContent } from "../lib/useContent";
@@ -8,7 +9,7 @@ export function Khanqah() {
   return (
     <Layout>
       <section className="relative min-h-[80vh] bg-forest text-ivory">
-        <img src={data.hero.image.src} alt={data.hero.image.alt} className="absolute inset-0 h-full w-full object-cover" />
+        <Photo priority src={data.hero.image.src} alt={data.hero.image.alt} className="absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0 bg-forest/55" />
         <div className="relative mx-auto flex min-h-[80vh] max-w-7xl flex-col justify-end px-5 pb-16 lg:px-8">
           <Eyebrow light>{data.hero.eyebrow}</Eyebrow>
@@ -33,7 +34,7 @@ export function Khanqah() {
         </Reveal>
         <Reveal>
           <div className="img-frame aspect-[4/3]">
-            <img src={data.founder.image.src} alt={data.founder.image.alt} />
+            <Photo src={data.founder.image.src} alt={data.founder.image.alt} />
           </div>
         </Reveal>
       </section>
@@ -41,7 +42,7 @@ export function Khanqah() {
       <section className="bg-forest py-20 text-ivory">
         <div className="mx-auto grid max-w-7xl gap-10 px-5 lg:grid-cols-2 lg:px-8">
           <div className="img-frame aspect-[4/3]">
-            <img src={data.craft.image.src} alt={data.craft.image.alt} />
+            <Photo src={data.craft.image.src} alt={data.craft.image.alt} />
           </div>
           <div className="flex flex-col justify-center">
             <h2 className="font-display text-5xl text-sand">{data.craft.title}</h2>
@@ -49,7 +50,7 @@ export function Khanqah() {
               {data.craft.body}
             </p>
             <div className="mt-8 img-frame aspect-[16/9]">
-              <img src={data.craft.insetImage.src} alt={data.craft.insetImage.alt} />
+              <Photo src={data.craft.insetImage.src} alt={data.craft.insetImage.alt} />
             </div>
           </div>
         </div>

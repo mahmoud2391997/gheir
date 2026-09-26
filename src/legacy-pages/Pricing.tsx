@@ -1,3 +1,4 @@
+import { Photo } from "../components/Photo";
 import { Link } from "wouter";
 import { Layout, Eyebrow } from "../components/Layout";
 import { formatEGP } from "../data/catalog";
@@ -58,7 +59,7 @@ export function Pricing() {
             {products.map((p, i) => (
               <article key={p._id} className={`border border-walnut/15 ${i === 1 ? "lg:col-span-2" : ""}`}>
                 <div className={`img-frame ${i === 1 ? "aspect-[16/7]" : "aspect-[16/9]"}`}>
-                  <img src={p.imageUrl ?? (p.imageKey ? `/api/images/${p.imageKey}` : "/images/hero-alt.jpg")} alt={p.name} />
+                  <Photo src={p.imageUrl ?? (p.imageKey ? `/api/images/${p.imageKey}` : "/images/hero-alt.jpg")} alt={p.name} />
                 </div>
                 <div className="p-6">
                   <p className="font-mono text-[11px] uppercase tracking-widest text-walnut">{p.category}</p>

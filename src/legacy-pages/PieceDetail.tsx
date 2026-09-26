@@ -1,3 +1,4 @@
+import { Photo } from "../components/Photo";
 import { Link, useParams } from "wouter";
 import { Layout, Eyebrow } from "../components/Layout";
 import { formatEGP, pieceBySlug, pieces, systemById } from "../data/catalog";
@@ -23,7 +24,7 @@ export function PieceDetail() {
       <section className="mx-auto grid max-w-7xl gap-10 px-5 py-12 lg:grid-cols-12 lg:px-8">
         <div className="lg:col-span-7">
           <div className="img-frame aspect-[4/5]">
-            <img src={piece.image} alt={piece.name} />
+            <Photo src={piece.image} alt={piece.name} />
           </div>
         </div>
         <div className="lg:col-span-5 lg:pt-8">

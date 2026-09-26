@@ -1,12 +1,13 @@
+import { Photo } from "../components/Photo";
 import { Link } from "wouter";
 import { motion } from "motion/react";
 import { Layout, Reveal, Eyebrow } from "../components/Layout";
 import { Logo } from "../components/Logo";
-import { RoomCard } from "../components/Cards";
 import { useInquiry } from "../components/Inquiry";
 import { formatEGP, rooms, systems } from "../data/catalog";
 import { useContent } from "../lib/useContent";
 import { cmsDefaults } from "../cms/defaults";
+import { useLocale } from "../lib/locale";
 
 const threeWays = [
   rooms.find((r) => r.slug === "the-unbeige-living")!,
@@ -16,12 +17,14 @@ const threeWays = [
 
 export function Home() {
   const { open } = useInquiry();
+  const { pick, heading, t } = useLocale();
   const { data } = useContent("page.home", cmsDefaults["page.home"]);
 
   return (
     <Layout>
       <section className="relative min-h-[92vh] overflow-hidden bg-forest text-ivory">
-        <img
+        <Photo
+          priority
           src={data.hero.image.src}
           alt={data.hero.image.alt}
           className="absolute inset-0 h-full w-full object-cover"
@@ -108,10 +111,10 @@ export function Home() {
               <Reveal key={room.slug} className={i === 1 ? "md:mt-10" : ""}>
                 <Link href={`/collection/${room.slug}`} className="group block">
                   <div className="img-frame aspect-[4/5]">
-                    <img src={room.image} alt={room.name} />
+                    <Photo src={room.image} alt={pick(room.name, room.nameAr)} />
                   </div>
-                  <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.22em] text-sand">{room.type}</p>
-                  <h3 className="font-display text-3xl text-ivory group-hover:text-sand">{room.name}</h3>
+                  <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.22em] text-sand">{heading(room.type)}</p>
+                  <h3 className="font-display text-3xl text-ivory group-hover:text-sand">{pick(room.name, room.nameAr)}</h3>
                 </Link>
               </Reveal>
             ))}
@@ -153,14 +156,14 @@ export function Home() {
                 href={`/systems/${sys.id}`}
                 className="group relative aspect-[4/3] overflow-hidden"
               >
-                <img src={sys.image} alt={sys.name} className="h-full w-full object-cover transition duration-700 group-hover:scale-105" />
+                <Photo src={sys.image} alt={sys.name} className="h-full w-full object-cover transition duration-700 group-hover:scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-t from-forest/80 to-transparent" />
-                <div className="absolute bottom-5 left-5 right-5 text-ivory">
+                <div className="absolute inset-x-5 bottom-5 text-ivory">
                   <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-sand">{sys.tag}</p>
                   <h3 className="font-display text-4xl">
-                    {sys.name} <span className="italic text-sand">{sys.nameAr}</span>
+                    {pick(sys.name, sys.nameAr)} <span className="italic text-sand">{pick(sys.nameAr, sys.name)}</span>
                   </h3>
-                  <p className="font-mono text-xs">from {formatEGP(sys.from)}</p>
+                  <p className="font-mono text-xs">{t.from} {formatEGP(sys.from)}</p>
                 </div>
               </Link>
             ))}
@@ -171,7 +174,7 @@ export function Home() {
       <section className="mx-auto grid max-w-7xl items-center gap-10 px-5 py-20 lg:grid-cols-2 lg:px-8">
         <Reveal>
           <div className="img-frame aspect-[4/3]">
-            <img src={data.khanqah.image.src} alt={data.khanqah.image.alt} />
+            <Photo src={data.khanqah.image.src} alt={data.khanqah.image.alt} />
           </div>
         </Reveal>
         <Reveal>

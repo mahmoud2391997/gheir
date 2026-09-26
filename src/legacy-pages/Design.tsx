@@ -1,3 +1,4 @@
+import { Photo } from "../components/Photo";
 import { useMemo, useState } from "react";
 import { Link } from "wouter";
 import { Layout, Eyebrow } from "../components/Layout";
@@ -72,7 +73,7 @@ export function Design() {
       <div className="mx-auto grid max-w-7xl gap-10 px-5 pb-20 lg:grid-cols-12 lg:px-8">
         <div className="lg:col-span-7">
           <div className="img-frame aspect-[4/3]">
-            <img src={image} alt={`${piece.name} preview in ${wood} and ${fabric}`} />
+            <Photo src={image} alt={`${piece.name} preview in ${wood} and ${fabric}`} />
           </div>
           <p className="mt-3 font-mono text-[11px] uppercase tracking-widest text-walnut">
             Preview changes with wood / fabric

@@ -1,3 +1,4 @@
+import { Photo } from "../components/Photo";
 import { useState } from "react";
 import { Layout, Eyebrow } from "../components/Layout";
 import { WHATSAPP_URL } from "../data/catalog";
@@ -29,7 +30,7 @@ export function Consultation() {
           </a>
         </div>
         <div className="img-frame aspect-[16/10]">
-          <img src={data.image.src} alt={data.image.alt} />
+          <Photo src={data.image.src} alt={data.image.alt} />
         </div>
       </section>
       <section className="border-t border-walnut/15 py-16">

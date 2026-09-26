@@ -1,3 +1,4 @@
+import { Photo } from "../components/Photo";
 import { Link } from "wouter";
 import { Layout, Eyebrow } from "../components/Layout";
 import { ProductCard } from "../components/Cards";
@@ -23,7 +24,7 @@ export function Visualization() {
           {data.looks.map((l, i) => (
             <article key={l.title} className={i === 0 ? "lg:col-span-3" : ""}>
               <div className={`img-frame ${i === 0 ? "aspect-[16/8]" : "aspect-[4/3]"}`}>
-                <img src={l.image} alt={l.title} />
+                <Photo src={l.image} alt={l.title} />
               </div>
               <h2 className="mt-3 font-display text-3xl text-forest">{l.title}</h2>
               <p className="text-charcoal/70">{l.body}</p>
@@ -38,7 +39,7 @@ export function Visualization() {
             {rooms.slice(0, 3).map((r) => (
               <Link key={r.slug} href={`/collection/${r.slug}`} className="block">
                 <div className="img-frame aspect-[4/3]">
-                  <img src={r.image} alt={r.name} />
+                  <Photo src={r.image} alt={r.name} />
                 </div>
                 <p className="mt-2 font-display text-2xl">{r.name}</p>
               </Link>

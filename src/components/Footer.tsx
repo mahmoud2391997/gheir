@@ -3,6 +3,7 @@ import { Logo } from "./Logo";
 import { SHOWROOM } from "../data/catalog";
 import { useContent } from "../lib/useContent";
 import { cmsDefaults } from "../cms/defaults";
+import { useLocale } from "../lib/locale";
 
 const groups = [
   {
@@ -36,6 +37,7 @@ const groups = [
 export function Footer() {
   const fallback = { ...cmsDefaults["site.footer"], bottomRight: SHOWROOM.line, groups };
   const { data } = useContent<typeof fallback>("site.footer", fallback);
+  const { labelFor, pick, heading } = useLocale();
 
   return (
     <footer className="bg-forest text-ivory">
@@ -46,20 +48,17 @@ export function Footer() {
             {data.heroTaglineAr}
           </p>
           <p className="mt-4 max-w-sm text-sm leading-relaxed text-ivory/75">
-            {data.heroBodyEn}
-            <span lang="ar" dir="rtl" className="mt-2 inline-block">
-              {data.heroBodyAr}
-            </span>
+            {pick(data.heroBodyEn, data.heroBodyAr)}
           </p>
         </div>
         {data.groups.map((g) => (
           <div key={g.title} className="lg:col-span-2">
-            <p className="font-mono text-[11px] tracking-[0.25em] uppercase text-sand">{g.title}</p>
+            <p className="font-mono text-[11px] tracking-[0.25em] uppercase text-sand">{heading(g.title)}</p>
             <ul className="mt-4 space-y-2">
               {g.links.map((l) => (
                 <li key={l.href}>
                   <Link href={l.href} className="text-ivory/80 hover:text-ivory">
-                    {l.label}
+                    {labelFor(l.href, l.label)}
                   </Link>
                 </li>
               ))}

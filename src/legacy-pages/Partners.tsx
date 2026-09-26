@@ -1,3 +1,4 @@
+import { Photo } from "../components/Photo";
 import { useState } from "react";
 import { Layout, Eyebrow } from "../components/Layout";
 import { useContent } from "../lib/useContent";
@@ -25,7 +26,7 @@ export function Partners() {
           </p>
         </div>
         <div className="img-frame aspect-[4/3]">
-          <img src={data.image.src} alt={data.image.alt} />
+          <Photo src={data.image.src} alt={data.image.alt} />
         </div>
       </section>
       <section className="bg-walnut py-16 text-ivory">

@@ -1,3 +1,4 @@
+import { Photo } from "../components/Photo";
 import { Link, useParams } from "wouter";
 import { Layout, Eyebrow } from "../components/Layout";
 import { ProductCard } from "../components/Cards";
@@ -15,7 +16,7 @@ export function RoomDetail() {
   return (
     <Layout>
       <section className="relative min-h-[75vh] bg-charcoal text-ivory">
-        <img src={room.image} alt={room.name} className="absolute inset-0 h-full w-full object-cover" />
+        <Photo src={room.image} alt={room.name} className="absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-charcoal via-charcoal/45 to-transparent" />
         <div className="relative mx-auto flex min-h-[75vh] max-w-7xl flex-col justify-end px-5 pb-12 lg:px-8">
           <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-sand">{room.type}</p>

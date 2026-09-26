@@ -1,3 +1,4 @@
+import { Photo } from "../components/Photo";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Layout, Eyebrow } from "../components/Layout";
@@ -78,7 +79,7 @@ export function Products() {
                 <article key={p._id} className="border border-walnut/15">
                   <Link href={`/products/${p.slug}`} className="block">
                     <div className="img-frame aspect-[4/3]">
-                      <img src={image} alt={p.name} />
+                      <Photo src={image} alt={p.name} />
                     </div>
                   </Link>
                   <div className="p-6">

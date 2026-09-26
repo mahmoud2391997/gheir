@@ -1,5 +1,6 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import { Logo } from "./Logo";
+import { useLocale } from "../lib/locale";
 
 type InquiryPreset = {
   title?: string;
@@ -19,6 +20,7 @@ export function InquiryProvider({ children }: { children: ReactNode }) {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const { t } = useLocale();
 
   const api = useMemo(
     () => ({
@@ -50,19 +52,19 @@ export function InquiryProvider({ children }: { children: ReactNode }) {
           >
             {sent ? (
               <div className="space-y-4">
-                <p className="font-mono text-[11px] tracking-[0.25em] uppercase text-walnut">Received</p>
+                <p className="font-mono text-[11px] tracking-[0.25em] uppercase text-walnut">{t.received}</p>
                 <h2 id="inquiry-title" className="font-display text-4xl text-forest">
-                  We’ll reply as a conversation.
+                  {t.inquiryThanks}
                 </h2>
-                <p lang="ar" className="text-charcoal/80">
-                  حوار — مش عرض. عادةً خلال يوم.
+                <p className="text-charcoal/80">
+                  {t.inquirySoon}
                 </p>
                 <button
                   type="button"
                   className="mt-4 border border-forest px-5 py-3 text-sm text-forest hover:bg-forest hover:text-ivory"
                   onClick={() => setOpen(false)}
                 >
-                  Close
+                  {t.close}
                 </button>
               </div>
             ) : (
@@ -99,15 +101,15 @@ export function InquiryProvider({ children }: { children: ReactNode }) {
                 }}
               >
                 <Logo compact />
-                <p className="mt-5 font-mono text-[11px] tracking-[0.25em] uppercase text-walnut">Inquiry</p>
+                <p className="mt-5 font-mono text-[11px] tracking-[0.25em] uppercase text-walnut">{t.inquiry}</p>
                 <h2 id="inquiry-title" className="font-display text-4xl text-forest">
-                  Start a conversation
+                  {t.inquiryTitle}
                 </h2>
                 {preset.summary && (
-                  <p className="border-l-2 border-walnut pl-3 text-sm text-charcoal/80">{preset.summary}</p>
+                  <p className="border-s-2 border-walnut ps-3 text-sm text-charcoal/80">{preset.summary}</p>
                 )}
                 <label className="block text-sm">
-                  <span className="font-mono text-[11px] uppercase tracking-widest text-walnut">Name</span>
+                  <span className="font-mono text-[11px] uppercase tracking-widest text-walnut">{t.name}</span>
                   <input
                     required
                     name="name"
@@ -115,16 +117,17 @@ export function InquiryProvider({ children }: { children: ReactNode }) {
                   />
                 </label>
                 <label className="block text-sm">
-                  <span className="font-mono text-[11px] uppercase tracking-widest text-walnut">WhatsApp</span>
+                  <span className="font-mono text-[11px] uppercase tracking-widest text-walnut">{t.whatsapp}</span>
                   <input
                     required
                     name="phone"
                     type="tel"
+                    dir="ltr"
                     className="mt-1 w-full border border-walnut/25 bg-ivory px-3 py-2.5 outline-none focus:border-forest"
                   />
                 </label>
                 <label className="block text-sm">
-                  <span className="font-mono text-[11px] uppercase tracking-widest text-walnut">Note</span>
+                  <span className="font-mono text-[11px] uppercase tracking-widest text-walnut">{t.note}</span>
                   <textarea
                     name="note"
                     rows={4}
@@ -138,14 +141,14 @@ export function InquiryProvider({ children }: { children: ReactNode }) {
                     disabled={submitting}
                     className="bg-forest px-5 py-3 text-sm text-ivory hover:bg-charcoal disabled:opacity-60"
                   >
-                    {submitting ? "Sending…" : "Send"}
+                    {submitting ? t.sending : t.send}
                   </button>
                   <button
                     type="button"
                     className="px-5 py-3 text-sm text-walnut underline-offset-4 hover:underline"
                     onClick={() => setOpen(false)}
                   >
-                    Not now
+                    {t.notNow}
                   </button>
                 </div>
                 {error && <p className="text-sm text-red-700">{error}</p>}

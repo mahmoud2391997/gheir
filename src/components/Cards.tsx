@@ -3,16 +3,19 @@ import type { Piece, Room } from "../data/catalog";
 import { formatEGP } from "../data/catalog";
 import { useCart } from "../lib/cart";
 import { useWishlist } from "../lib/wishlist";
+import { useLocale } from "../lib/locale";
+import { Photo } from "./Photo";
 
 export function ProductCard({ piece, large = false }: { piece: Piece; large?: boolean }) {
   const cart = useCart();
   const wishlist = useWishlist();
+  const { t, pick, locale } = useLocale();
   const saved = wishlist.has(piece.slug);
   return (
     <article className="group">
       <Link href={`/piece/${piece.slug}`} className="block">
         <figure className={`img-frame ${large ? "aspect-[4/5]" : "aspect-[4/3]"}`}>
-          <img src={piece.image} alt={`${piece.name} — ${piece.nameAr}`} />
+          <Photo src={piece.image} alt={pick(piece.name, piece.nameAr)} />
         </figure>
       </Link>
       <figcaption className="mt-3 flex items-end justify-between gap-3">
@@ -22,14 +25,14 @@ export function ProductCard({ piece, large = false }: { piece: Piece; large?: bo
             {piece.edition ? ` · ${piece.edition}` : ""}
           </p>
           <Link href={`/piece/${piece.slug}`} className="block font-display text-2xl leading-tight text-forest group-hover:text-walnut">
-            {piece.name}
+            {pick(piece.name, piece.nameAr)}
           </Link>
-          <p lang="ar" className="text-sm text-charcoal/70">
-            {piece.nameAr}
+          <p lang={locale === "ar" ? "en" : "ar"} dir={locale === "ar" ? "ltr" : "rtl"} className="text-sm text-charcoal/70">
+            {pick(piece.nameAr, piece.name)}
           </p>
         </div>
         <div className="flex flex-col items-end gap-2">
-          <p className="font-mono text-xs text-walnut">from {formatEGP(piece.priceFrom)}</p>
+          <p className="font-mono text-xs text-walnut">{t.from} {formatEGP(piece.priceFrom)}</p>
           <div className="flex flex-wrap justify-end gap-2">
             <button
               type="button"
@@ -41,7 +44,7 @@ export function ProductCard({ piece, large = false }: { piece: Piece; large?: bo
                 )
               }
             >
-              Add
+              {t.add}
             </button>
             <button
               type="button"
@@ -61,7 +64,7 @@ export function ProductCard({ piece, large = false }: { piece: Piece; large?: bo
                 })
               }
             >
-              {saved ? "Saved" : "Save"}
+              {saved ? t.saved : t.save}
             </button>
           </div>
         </div>
@@ -71,17 +74,18 @@ export function ProductCard({ piece, large = false }: { piece: Piece; large?: bo
 }
 
 export function RoomCard({ room, featured = false }: { room: Room; featured?: boolean }) {
+  const { pick, locale, heading } = useLocale();
   return (
     <Link href={`/collection/${room.slug}`} className="group block">
       <div className={`img-frame ${featured ? "aspect-[16/10]" : "aspect-[4/3]"}`}>
-        <img src={room.image} alt={`${room.name} ${room.type} room`} />
+        <Photo src={room.image} alt={pick(room.name, room.nameAr)} />
       </div>
       <div className="mt-3 flex items-baseline justify-between gap-3">
         <div>
-          <p className="font-mono text-[10px] tracking-[0.22em] uppercase text-walnut">{room.type}</p>
-          <h3 className="font-display text-3xl leading-none text-forest group-hover:text-walnut">{room.name}</h3>
-          <p lang="ar" className="mt-1 text-sm">
-            {room.nameAr}
+          <p className="font-mono text-[10px] tracking-[0.22em] uppercase text-walnut">{heading(room.type)}</p>
+          <h3 className="font-display text-3xl leading-none text-forest group-hover:text-walnut">{pick(room.name, room.nameAr)}</h3>
+          <p lang={locale === "ar" ? "en" : "ar"} dir={locale === "ar" ? "ltr" : "rtl"} className="mt-1 text-sm">
+            {pick(room.nameAr, room.name)}
           </p>
         </div>
         <p className="font-mono text-xs text-walnut">{formatEGP(room.total)}</p>

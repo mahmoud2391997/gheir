@@ -1,3 +1,4 @@
+import { Photo } from "../components/Photo";
 import { Layout, Eyebrow } from "../components/Layout";
 import { SHOWROOM, WHATSAPP_URL } from "../data/catalog";
 import { Link } from "wouter";
@@ -9,7 +10,8 @@ export function Showroom() {
   return (
     <Layout>
       <section className="relative min-h-[78vh] bg-forest text-ivory">
-        <img
+        <Photo
+          priority
           src={data.hero.image.src}
           alt={data.hero.image.alt}
           className="absolute inset-0 h-full w-full object-cover"
@@ -41,7 +43,7 @@ export function Showroom() {
           </div>
         </div>
         <div className="img-frame aspect-[4/3]">
-          <img src={data.visit.image.src} alt={data.visit.image.alt} />
+          <Photo src={data.visit.image.src} alt={data.visit.image.alt} />
         </div>
       </section>
     </Layout>

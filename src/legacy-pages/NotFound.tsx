@@ -1,3 +1,4 @@
+import { Photo } from "../components/Photo";
 import { Link } from "wouter";
 import { Layout } from "../components/Layout";
 import { Logo } from "../components/Logo";
@@ -6,7 +7,7 @@ export function NotFound() {
   return (
     <Layout>
       <section className="relative min-h-[70vh] overflow-hidden bg-forest text-ivory">
-        <img src="/images/craft-fingerprint.jpg" alt="" className="absolute inset-0 h-full w-full object-cover opacity-40" />
+        <Photo src="/images/craft-fingerprint.jpg" alt="" className="absolute inset-0 h-full w-full object-cover opacity-40" />
         <div className="relative mx-auto flex min-h-[70vh] max-w-4xl flex-col justify-center px-5 py-24">
           <Logo dark compact />
           <p className="mt-8 font-mono text-xs uppercase tracking-[0.3em] text-sand">404</p>

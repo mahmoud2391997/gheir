@@ -1,3 +1,4 @@
+import { Photo } from "../components/Photo";
 import { useMemo, useState } from "react";
 import { Link } from "wouter";
 import { Layout, Eyebrow } from "../components/Layout";
@@ -53,7 +54,7 @@ export function CartPage() {
               {cart.items.map((it) => (
                 <div key={it.id} className="grid gap-4 rounded-xl border bg-[#F2EAD8] p-4 sm:grid-cols-[110px,1fr]">
                   <div className="img-frame aspect-[4/3]">
-                    <img src={it.image ?? "/images/hero-alt.jpg"} alt={it.name} />
+                    <Photo src={it.image ?? "/images/hero-alt.jpg"} alt={it.name} />
                   </div>
                   <div className="flex flex-col justify-between gap-3">
                     <div>

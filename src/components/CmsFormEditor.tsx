@@ -1,3 +1,4 @@
+import { Photo } from "./Photo";
 import { useMemo, useState } from "react";
 
 type Primitive = string | number | boolean | null;
@@ -133,7 +134,7 @@ export function CmsFormEditor({
             <div className="mt-1 grid gap-3 sm:grid-cols-[160px,1fr]">
               <div className="rounded-lg border bg-white/40 p-2">
                 <div className="img-frame aspect-[4/3]">
-                  <img src={node || "/images/hero-alt.jpg"} alt="" />
+                  <Photo src={node || "/images/hero-alt.jpg"} alt="" />
                 </div>
               </div>
               <div>
@@ -291,7 +292,7 @@ export function CmsFormEditor({
             <div className="mt-3 grid gap-3 sm:grid-cols-[160px,1fr]">
               <div className="rounded-lg border bg-white/40 p-2">
                 <div className="img-frame aspect-[4/3]">
-                  <img src={src || "/images/hero-alt.jpg"} alt={String(obj.alt ?? "")} />
+                  <Photo src={src || "/images/hero-alt.jpg"} alt={String(obj.alt ?? "")} />
                 </div>
               </div>
               <label className="text-xs text-[#5C4033]">

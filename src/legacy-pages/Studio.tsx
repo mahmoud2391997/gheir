@@ -1,3 +1,4 @@
+import { Photo } from "../components/Photo";
 import { useState } from "react";
 import { Layout, Eyebrow } from "../components/Layout";
 import { useInquiry } from "../components/Inquiry";
@@ -24,7 +25,7 @@ export function Studio() {
       </section>
       <section className="mx-auto grid max-w-7xl items-center gap-10 px-5 pb-16 lg:grid-cols-2 lg:px-8">
         <div className="img-frame aspect-[4/3]">
-          <img src={data.image.src} alt={data.image.alt} />
+          <Photo src={data.image.src} alt={data.image.alt} />
         </div>
         <ol className="space-y-6">
           {data.steps.map((s) => (

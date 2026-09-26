@@ -72,6 +72,11 @@
   letter-spacing: -0.03em;
 }
 
+html[dir="rtl"] .font-display {
+  font-family: "IBM Plex Sans Arabic", "Cormorant Garamond", serif;
+  letter-spacing: 0;
+}
+
 .font-mono {
   font-family: var(--font-mono);
 }

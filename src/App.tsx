@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Route, Switch, useLocation } from "wouter";
 import { InquiryProvider } from "./components/Inquiry";
+import { LocaleProvider } from "./lib/locale";
 import { CartProvider } from "./lib/cart";
 import { WishlistProvider } from "./lib/wishlist";
 import { Home } from "./legacy-pages/Home";
@@ -35,6 +36,7 @@ function ScrollToTop() {
 
 export default function App() {
   return (
+    <LocaleProvider>
     <WishlistProvider>
       <CartProvider>
         <InquiryProvider>
@@ -65,5 +67,6 @@ export default function App() {
         </InquiryProvider>
       </CartProvider>
     </WishlistProvider>
+    </LocaleProvider>
   );
 }
